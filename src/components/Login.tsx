@@ -1,73 +1,45 @@
 import axios from 'axios'; // Import axios for API calls
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import './Login.css'; // Optional: Add styling for your Login component
 
 axios.defaults.withCredentials = true; // Ensure cookies are included in all requests
 
 const Login: React.FC = () => {
+    const location = useLocation();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [csrfToken, setCsrfToken] = useState(''); // Store CSRF token
+    const [error, setError] = useState(location.state?.message || '');
     const Navigate = useNavigate();
 
-    // ✅ Fetch CSRF Token when component loads
-    useEffect(() => {
-        console.log("🔍 Fetching CSRF Token...");
-        const fetchCsrfToken = async () => {
-            try {
-                const csrfResponse = await axios.get('http://localhost:5000/csrf-token', { withCredentials: true });
-                console.log("✅ CSRF Token received:", csrfResponse.data.csrfToken);
-                setCsrfToken(csrfResponse.data.csrfToken); // ✅ Store CSRF token for later use
-            } catch (error) {
-                console.error("❌ Failed to fetch CSRF Token", error);
-                setError("Failed to fetch security token. Please refresh.");
-            }
-        };
-
-        fetchCsrfToken();
-    }, []);
-
-    // ✅ Check if user is already authenticated
     useEffect(() => {
         console.log("🔍 Checking authentication...");
         const checkAuth = async () => {
             try {
-                console.log("🔍 Fetching CSRF Token...");
-                const csrfResponse = await axios.get('http://localhost:5000/csrf-token', { withCredentials: true });
-                setCsrfToken(csrfResponse.data.csrfToken);
-                console.log("✅ CSRF Token received:", csrfResponse.data.csrfToken);
-        
-                console.log("🔍 Checking authentication...");
-                const authResponse = await axios.get('http://localhost:5000/api/checkAuth', { withCredentials: true });
-        
+                const authResponse = await axios.get('http://localhost:5000/home', { withCredentials: true });
+
                 if (authResponse.status === 200) {
                     console.log("✅ User authenticated, navigating to home.");
                     Navigate("/home");
                 }
             } catch (err) {
                 console.warn("🔒 User not authenticated, staying on login page.");
-                setError("Session expired. Please log in again."); // Show an error message instead of redirecting
+                // Stay on login page if authentication fails
             }
         };
-        
+
         checkAuth();
     }, [Navigate]);
 
-    // ✅ Handle Login Request
     const handleLogin = async () => {
         try {
-            console.log("📨 Sending login request with CSRF Token:", csrfToken);
-
+            console.log("📨 Sending login request...");
+            
             const response = await axios.post('http://localhost:5000/login', {
                 username,
                 password
-            }, { 
-                headers: { 
-                    'X-CSRF-Token': csrfToken  // ✅ Ensure CSRF token is included
-                },
-                withCredentials: true // ✅ Ensure cookies are sent
+            }, {
+                withCredentials: true // Ensure cookies are sent
             });
 
             if (response.status === 200) {
@@ -75,12 +47,9 @@ const Login: React.FC = () => {
                 Navigate("/Home", { state: { message: username } });
             }
         } catch (err: any) {
-            console.error("❌ Login failed:", err.response?.data || err.message);
             if (err.response) {
+                console.error("❌ Login failed:", err.response.data);
                 switch (err.response.status) {
-                    case 403:
-                        setError('Invalid CSRF token. Please refresh and try again.');
-                        break;
                     case 404:
                         setError('User not found. Please register.');
                         break;
@@ -94,6 +63,7 @@ const Login: React.FC = () => {
                         setError('An unexpected error occurred.');
                 }
             } else {
+                console.error("❌ Network error:", err);
                 setError('Network error. Please check your connection.');
             }
         }
@@ -102,7 +72,7 @@ const Login: React.FC = () => {
     return (
         <div className="login-page">
             <div className='login-container'>
-                <h1 className='title'>Login</h1>34
+                <h1 className='title'>Login</h1>
                 <div className="login-form">
                     <input
                         type="text"

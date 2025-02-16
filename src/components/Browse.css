@@ -215,17 +215,21 @@
   margin-top: 10px;
 }
 
-.userNameViewProfileContainer{
+.addFriendButtonContainer{
   display: flex;
   flex-direction: row;
   padding: 10px;
 }
 
 .viewProfileButton {
-  font-size: 70%; 
   padding: 2px 6px;
   height: auto; 
   line-height: 1; 
+}
+
+.optionUserToolsBrowse {
+  display: flex;
+  flex-direction: row;
 }
 
 

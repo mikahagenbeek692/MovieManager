@@ -9,6 +9,7 @@ interface User {
     email: string;
     watchList: Movie[];
     favoriteGenres: string;
+    bio: string;
 }
 
 interface Movie {
@@ -59,7 +60,7 @@ const Browse: React.FC = () => {
 
     const fetchUsersWithWatchlists = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/usersWithWatchlists');
+            const response = await axios.get('http://localhost:5000/api/users');
             setUserList(response.data);
             setFilteredUsers(response.data);
 
@@ -179,34 +180,18 @@ const Browse: React.FC = () => {
         if (!selectedUser) {
             return (
                 <div className="userInfoContainer">
-                    <h2>User WatchList</h2>
+                    <h2>User Biography</h2>
                     <h3>Please select a user to view their watchlist.</h3>
                 </div>
             );
         }
 
-        if (!selectedUser.watchList || selectedUser.watchList.length === 0) {
-            return (
-                <div className="userInfoContainer">
-                    <h2>User WatchList</h2>
-                    <h3>This user has no saved movies.</h3>
-                </div>
-            );
-        }
 
         return (
             <div className="userInfoContainer">
-                <h2>{selectedUser.username}'s WatchList</h2>
+                <h2>{selectedUser.username}'s Biography</h2>
                 <ul>
-                    {selectedUser.watchList.map((movie) => (
-                        <li key={movie.id} className={`optionUser${movie.watched ? ' selected' : ''}${movie.favorite ? ' favorite' : ''}`}>
-                            {movie.title} ({movie.releaseYear}) 
-                            <div className='optionUserTools'>
-                                {movie.favorite && <span className="favoriteStar">⭐</span>}
-                                <input type="checkbox" checked={movie.watched} readOnly />
-                            </div>
-                        </li>
-                    ))}
+                    {selectedUser.bio}
                 </ul>
             </div>
         );
@@ -222,11 +207,8 @@ const Browse: React.FC = () => {
                         userList.map((user) => (
                             <li key={user.id} className={`optionUser${selectedUser?.id === user.id ? ' selected' : ''}`} onClick={() => setSelectedUser(user)}>
                                 <div className="userDetails">
-                                    <div className='userNameViewProfileContainer'>
-                                        <span className="username">{user.username}</span>
-                                        <button className='viewProfileButton' onClick={() => handleNavigate(`/browse/${user.username}`)}>Info</button>
-                                    </div>
-
+                                    <span className="username">{user.username}</span>
+                                    
     
                                     {/* ✅ Only display genres if available */}
                                     {user.favoriteGenres && user.favoriteGenres.trim() !== "" ? (
@@ -241,15 +223,18 @@ const Browse: React.FC = () => {
                                         <span></span>
                                     )}
                                 </div>
-    
-                                <div className="optionUserToolsBrowseUserList">
-                                    <button
-                                        className="addFriendButton"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleAddFriend(user);
-                                        }}
-                                    />
+                                
+                                <div className='optionUserToolsBrowse'>
+                                    <button className='viewProfileButton' onClick={() => handleNavigate(`/browse/${user.username}`)}>Info</button>
+                                    <div className="addFriendButtonContainer">
+                                        <button
+                                            className="addFriendButton"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleAddFriend(user);
+                                            }}
+                                        />
+                                    </div>
                                 </div>
                             </li>
                         ))

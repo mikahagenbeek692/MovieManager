@@ -16,6 +16,7 @@ interface Movie {
     rating: number; // e.g., 8.5
     description: string;
     watched: boolean;
+    favorite: boolean;
 }
 
 interface MovieListProps {
@@ -57,7 +58,8 @@ const Home: React.FC = () => {
             const movieTitles = watchList.map(movie => ({
                 id: movie.id,
                 title: movie.title,
-                watched: movie.watched === true
+                watched: movie.watched === true,
+                favorite: movie.favorite === true
             }));
 
             console.log("Saving watchlist:", { currentUser , movieTitles });
@@ -153,7 +155,8 @@ const Home: React.FC = () => {
                 duration: movie.duration,
                 rating: movie.rating,
                 description: movie.description,
-                watched: !!movie.watched
+                watched: !!movie.watched,
+                favorite: movie.favorite !== null ? !!movie.favorite : false
             }));
             setWatchList(watchListMovies); // Update the state with the fetched watchlist
         } catch (error) {
@@ -166,7 +169,8 @@ const Home: React.FC = () => {
             const movieTitles = watchList.map(movie => ({
                 id: movie.id,
                 title: movie.title,
-                watched: movie.watched === true
+                watched: movie.watched === true,
+                favorite: movie.favorite === true
             }));
 
             console.log("Saving watchlist:", { currentUser, movieTitles });

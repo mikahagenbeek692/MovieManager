@@ -38,39 +38,6 @@ const EditWatchList: React.FC = () => {
     const [years, setYears] = useState<number[]>([])
     const [genres, setGenres] = useState<string[]>([]);
 
-    const fetchMovies = async () => {
-        try {
-            const response = await axios.get('http://localhost:5000/api/movies');
-            const movies: Movie[] = response.data.map((movie: any) => ({
-                id: movie.id,
-                title: movie.title,
-                releaseYear: movie.release_year,
-                genre: movie.genre,
-                director: movie.director,
-                cast: movie.cast,
-                duration: movie.duration,
-                rating: movie.rating,
-                description: movie.description,
-                watched: !!movie.watched
-            })).sort((a, b) => a.releaseYear - b.releaseYear); // Sorting by release year in ascending order
-            
-            const fetchedYears: number[] = [
-                ...new Set(movies.map((movie) => movie.releaseYear)),
-            ].sort((a, b) => a - b); // Sort years in ascending order
-
-            const fetchedGenres: string[] = [
-                ...new Set(
-                    movies
-                        .flatMap((movie) => movie.genre.split(',').map((g) => g.trim())) // Split and trim spaces
-                ),
-            ].sort(); // Sort genres alphabetically
-
-            setYears(fetchedYears);
-            setGenres(fetchedGenres);
-        } catch (error) {
-            console.error("Error fetching movies:", error);
-        }
-    };
 
     const fetchWatchList = async () => {
         try {
@@ -88,7 +55,7 @@ const EditWatchList: React.FC = () => {
                 rating: movie.rating,
                 description: movie.description,
                 watched: !!movie.watched,
-                favorite: !!movie.favorite  // Include favorite status
+                favorite: movie.favorite !== null ? !!movie.favorite : false  // Include favorite status
             }));
             setWatchList(watchListMovies);
 
@@ -99,7 +66,6 @@ const EditWatchList: React.FC = () => {
     
 
     useEffect(() => {
-        fetchMovies();
         fetchWatchList();
         const checkAuth = async () => {
             try {
@@ -118,7 +84,7 @@ const EditWatchList: React.FC = () => {
                 id: movie.id,
                 title: movie.title,
                 watched: movie.watched === true,
-                favorite: movie.favorite
+                favorite: movie.favorite === true
             }));
 
             console.log("Saving watchlist:", { currentUser, movieTitles });
@@ -187,7 +153,7 @@ const EditWatchList: React.FC = () => {
                     id: movie.id,
                     title: movie.title,
                     watched: movie.watched === true,
-                    favorite: movie.favorite
+                    favorite: movie.favorite === true
                 }));
     
                 console.log("Saving watchlist:", { username, movieTitles });
@@ -277,22 +243,34 @@ const EditWatchList: React.FC = () => {
             setWatchedFilter(watched);
         }
     
-        const handleWatchedMovie = (movie) => {
+        const handleWatchedMovie = (movie: Movie) => {
             setWatchList((prevWatchList) =>
                 prevWatchList.map((m) =>
                     m.id === movie.id ? { ...m, watched: !m.watched } : m
                 )
             );
+        
+            // Preserve the selected movie after state update
+            setSelectedMovieInfo((prevSelected) => 
+                prevSelected && prevSelected.id === movie.id ? { ...prevSelected, watched: !movie.watched } : prevSelected
+            );
         };
+        
         const handleFavoriteMovie = (movie: Movie) => {
             setWatchList((prevWatchList) =>
                 prevWatchList.map((m) =>
                     m.id === movie.id
-                        ? { ...m, favorite: !m.favorite } 
-                        : { ...m, favorite: false }       
+                        ? { ...m, favorite: !m.favorite }
+                        : { ...m, favorite: false } // Only one movie can be favorite
                 )
             );
+        
+            // Preserve the selected movie after state update
+            setSelectedMovieInfo((prevSelected) => 
+                prevSelected && prevSelected.id === movie.id ? { ...prevSelected, favorite: !movie.favorite } : prevSelected
+            );
         };
+        
         
         
 

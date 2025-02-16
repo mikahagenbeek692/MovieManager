@@ -229,6 +229,7 @@ const Profile: React.FC = () => {
                         >
                             <option value="private">Private</option>
                             <option value="public">Public</option>
+                            <option value="friendsonly">Friends only</option>
                         </select>
                     </div>
 
