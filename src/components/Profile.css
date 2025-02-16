@@ -1,0 +1,118 @@
+.profileContainer {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #1bdeec;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 5px solid black; /* Adds a 2px solid black border */
+}
+
+.profileHeader {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+    border: 3px solid black; /* Adds a 2px solid black border */
+    background-color: #767de6;
+}
+
+.profileSection {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    
+}
+
+.profileSection label {
+    font-weight: bold;
+    border: 3px solid black; /* Adds a 2px solid black border */
+    background-color: #767de6;
+}
+
+.privacyDropdown {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    border: 3px solid black; /* Adds a 2px solid black border */
+}
+
+.friendsList,
+.friendRequestsList {
+    max-width: 400px;
+    max-height: 300px;
+    min-height: 300px;
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    border: 5px solid black; /* Adds a 5px solid black border */
+    padding: 10px; /* Adds some spacing inside the border for better appearance */
+    border-radius: 5px; /* Optional: adds rounded corners */
+    overflow-y: auto; /* ✅ Enables vertical scrolling */
+    overflow-x: hidden; /* Prevents horizontal scrolling */
+    background: #549196;
+}
+
+
+
+.friendItem,
+.friendRequestItem {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border: 3px solid black; /* Adds a 2px solid black border */
+    padding: 10px; /* Adds some spacing inside the border for better appearance */
+    border-radius: 5px; /* Optional: adds rounded corners */
+    background-color: rgb(70, 136, 221);
+}
+
+.removeButton {
+    background-color: red;
+    border: 2px solid black; /* Adds a 2px solid black border */
+    padding: 10px; /* Adds some spacing inside the border for better appearance */
+    border-radius: 5px; /* Optional: adds rounded corners */
+  } 
+
+  .optionUserTools{
+    display: flex;
+  }
+
+.acceptButton,
+.rejectButton {
+    padding: 5px 10px;
+    margin-left: 5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 2px solid black; 
+}
+
+.acceptButton {
+    background: #4caf50;
+    color: #fff;
+}
+
+.rejectButton {
+    background: #f44336;
+    color: #fff;
+}
+
+.acceptButton:hover,
+.rejectButton:hover {
+    opacity: 0.9;
+}
+.saveBioButton {
+    background-color: #064e3b;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    display: block; /* Ensure it takes up full width of parent container */
+    margin: 10px auto; /* Centering */
+    width: fit-content; /* Adjusts width to fit content */
+  }
+  

@@ -1,0 +1,399 @@
+
+.App {
+    display: inline;
+    margin-top: 60px; 
+  }
+  
+  .titleHome {
+    width: 100%;
+    border: none;
+    text-align: center;
+    align-items: center;
+  }
+  
+  /* Header styling */
+  .App-header {
+    position: fixed;
+    background-color: #282c34;
+    white-space: nowrap; 
+    color: white;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed; /* Fixes the header at the top */
+    top: -20px; /* Make sure it's at the very top */
+    height: 10%;
+    width: 100%;
+    min-height: 80px; /* Minimum height to maintain accessibility */
+    z-index: 1000; /* Keeps the header on top of other content */
+    border: 2px solid black; /* Adds a 2px solid black border */
+    padding: 20px; /* Adds some spacing inside the border for better appearance */
+    border-radius: 5px; /* Optional: adds rounded corners */
+    
+  }
+  
+  /* Main content area */
+  .mainScreen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-top: 50px; /* Add some space so content doesn't overlap with the header */
+    padding-top: calc(50px + 3vw); /* Adjust for dynamic padding */
+  }
+  
+  .logoutButton {
+    display: flex;
+    width: fit-content;
+    margin-right: 25px;
+  }
+  
+  
+  .buttonGroup {
+    max-width: 500px;
+    min-width: 250px;
+    margin-left: 300px;
+    align-items: center;
+    display: flex ;
+    flex-direction: row;
+  }
+  
+  .userListAndInfo {
+    display: flex;
+    align-items: center;
+    
+    
+  }
+  
+  .option {
+    width: 87.5%;
+    max-width: 87.5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: right;
+    text-align: left;
+    border: 2px solid black; /* Adds a 2px solid black border */
+    padding: 10px; /* Adds some spacing inside the border for better appearance */
+    border-radius: 5px; /* Optional: adds rounded corners */
+    cursor: pointer; /* Makes it look clickable */
+    background-color: rgb(69, 163, 124);
+    position: relative;
+  }
+  
+  .optionUser{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border: 2px solid black; /* Adds a 2px solid black border */
+    padding: 10px; /* Adds some spacing inside the border for better appearance */
+    border-radius: 5px; /* Optional: adds rounded corners */
+    background-color: rgb(69, 163, 124);
+  }
+  
+  .optionUserTools{
+    display: flex;
+  }
+  
+  .addMovie {
+    width: 200px;
+    height: 45px;
+    border: 2px solid black; /* Adds a 2px solid black border */
+    padding: 10px; /* Adds some spacing inside the border for better appearance */
+    border-radius: 5px; /* Optional: adds rounded corners */
+  
+  
+  }
+  
+  .userList {
+    max-width: 400px;
+    max-height: 300px;
+    min-height: 300px;
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    border: 2px solid black; /* Adds a 2px solid black border */
+    padding: 10px; /* Adds some spacing inside the border for better appearance */
+    border-radius: 5px; /* Optional: adds rounded corners */
+    cursor: pointer; /* Makes it look clickable */
+    overflow-y: auto;
+    overflow-x: auto;
+    background-color: rgb(78, 216, 158);
+  }
+  
+  .userList ul {
+    max-width: 400px;
+    max-height: 300px;
+    min-height: 300px;
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    border: 2px solid black; /* Adds a 2px solid black border */
+    padding: 10px; /* Adds some spacing inside the border for better appearance */
+    border-radius: 5px; /* Optional: adds rounded corners */
+    overflow-x: auto;
+  }
+  
+  .userInfoContainer {
+    max-width: 400px;
+    max-height: 300px;
+    min-height: 300px;
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    text-align: center;
+    border: 2px solid black; /* Adds a 2px solid black border */
+    padding: 10px; /* Adds some spacing inside the border for better appearance */
+    border-radius: 5px; /* Optional: adds rounded corners */
+    overflow-y: scroll;
+    background-color: rgb(78, 216, 158);
+  }
+  
+  
+  .userInfoContainer h2 {
+    border: 2px solid black; /* Adds a 2px solid black border */
+    padding: 10px; /* Adds some spacing inside the border for better appearance */
+    border-radius: 5px; /* Optional: adds rounded corners */
+    background-color: rgb(69, 163, 124);
+  }
+  
+  .userInfoContainer li {
+    list-style: none; /* Removes the bullet points */
+    padding: 0; /* Removes default padding */
+    margin: 0; /* Removes default margin */
+    text-align: left;
+  }
+  
+  .searchAndAdd {
+    display: flex;
+    flex-direction: column;
+    gap: 20px
+  }
+  
+  
+  .addUser {
+    display: flex;
+    align-items: center;
+  }
+  
+  .userOptions {
+    margin-top: 85px;
+    max-height: 50%;
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    border: 2px solid black; /* Adds a 2px solid black border */
+    padding: 10px; /* Adds some spacing inside the border for better appearance */
+    border-radius: 5px; /* Optional: adds rounded corners */
+    cursor: pointer; /* Makes it look clickable */
+    overflow-y: scroll;
+    position: absolute;
+    background-color: rgb(78, 216, 158);
+  }
+  
+  .input {
+    max-width: 100%;
+    max-height: 50%;
+    width: 100%;
+    height: 45%;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    border: 2px solid black; /* Adds a 2px solid black border */
+    padding: 10px; /* Adds some spacing inside the border for better appearance */
+    border-radius: 5px; /* Optional: adds rounded corners */
+    cursor: pointer; /* Makes it look clickable */
+  }
+
+  
+  .searchAndAddWarning {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .removeButton {
+    background-color: red;
+    border: 2px solid black; /* Adds a 2px solid black border */
+    padding: 10px; /* Adds some spacing inside the border for better appearance */
+    border-radius: 5px; /* Optional: adds rounded corners */
+  } 
+  
+  .showMovieInfo {
+    background-color: rgb(0, 217, 255);
+    border: 2px solid black; /* Adds a 2px solid black border */
+    padding: 10px; /* Adds some spacing inside the border for better appearance */
+    border-radius: 5px; /* Optional: adds rounded corners */
+  }
+  
+  
+  .saveButtonBrowse {
+    border: 4px solid black; /* Adds a 2px solid black border */
+    border-radius: 5px; /* Optional: adds rounded corners */
+    background-color: #155724;
+
+  }
+  
+  
+  .selected {
+    background-color: rgb(132, 127, 209);
+  }
+  
+  .notificationEditWatchList {
+  
+    margin-left: 150px;
+    width: 70%;
+    padding: 10px 20px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #155724;
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  /* Animation for succesful watchList save */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(0);
+    }
+  }
+  
+  .notification.fade-out {
+    animation: fadeOut 1s ease-in-out forwards;
+  }
+  
+  
+  .userListAndInfoAndNotification{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .rating {
+  
+    padding: 1px 1px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #db0f6e;
+    background-color: #85305a;
+    border: 1px solid #c3e6cb;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-height: 25px;
+    min-height: 25px;
+  }
+  
+  .filtersContainer {
+    display: flex;
+    margin-right: 200px;
+    gap: 40px; 
+  }
+  
+  .filtersButtons {
+    display: flex;
+    flex-direction: row;
+  }
+  
+  .filterHeader {
+    font-style: italic;
+    font-weight: bold;
+    position: absolute;
+    width: 100%;
+  
+    margin-bottom: 100px;
+  }
+  
+  .noMoviesFound {
+    font-size: large;
+    font-weight: bold;
+  }
+  
+  .filterAndHeader {
+    margin-bottom: 50px;
+  }
+  
+  .watchListTools {
+    display: flex;
+    flex-direction: column;
+    margin-top: 30pt;
+  }
+  
+  .watchedCheckBox {
+    width: 100%; /* To adjust based on the height dynamically */
+    height: 100%; /* Adjust height to match the button */
+    appearance: none; /* Remove default checkbox styling */
+    background-color: #f0f0f0; /* Background color matching buttons */
+    border: 1px solid #ccc; /* Optional border for consistency */
+    border-radius: 5px; /* Optional for rounded corners */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 5px; /* Adjust padding for internal spacing */
+  }
+  
+  .watchedCheckBox:checked {
+    background-color: #007bff; /* Checked state background color */
+    color: white; /* Optional for matching button text */
+  }
+  
+  .watchedCheckBox::before {
+    content: '✔'; /* Display a checkmark when checked */
+    font-size: 1rem; /* Match size of other button text */
+    color: transparent; /* Hidden by default */
+  }
+  
+  .watchedCheckBox::before {
+    color: white; /* Show checkmark when checked */
+  }
+
+  .favoriteButton {
+    background: none;
+    border: none;
+    color: gold;
+    cursor: pointer;
+    font-size: 20px;
+    
+
+  }
+
+  .favoriteFilter {
+    display: flex;
+    flex-direction: row;
+    background-color: white;
+    display: flex;
+    justify-content: space-between;
+    border: 1px solid #000000; /* Optional border for consistency */
+  }
+  
+  .favoriteCheckBox {
+    display: flex;
+  }
+  
+  
+  

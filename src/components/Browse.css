@@ -1,0 +1,232 @@
+/* General styling */
+.App {
+  display: inline;
+  margin-top: 60px; 
+}
+
+.titleHome {
+  width: 100%;
+  border: none;
+  text-align: center;
+  align-items: center;
+}
+
+/* Header styling */
+.App-header {
+  position: fixed;
+  background-color: #282c34;
+  white-space: nowrap; 
+  color: white;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  position: fixed; /* Fixes the header at the top */
+  top: -20px; /* Make sure it's at the very top */
+  height: 10%;
+  width: 100%;
+  min-height: 80px; /* Minimum height to maintain accessibility */
+  z-index: 1000; /* Keeps the header on top of other content */
+  border: 2px solid black; /* Adds a 2px solid black border */
+  padding: 20px; /* Adds some spacing inside the border for better appearance */
+  border-radius: 5px; /* Optional: adds rounded corners */
+}
+
+/* Main content area */
+.mainScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 50px; /* Add some space so content doesn't overlap with the header */
+  margin: 20;
+  padding-top: calc(50px + 3vw); /* Adjust for dynamic padding */
+}
+
+.logoutButton {
+  display: flex;
+  width: fit-content;
+  margin-right: 25px;
+}
+
+.userList {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.userListAndInfo {
+  display: flex;
+  align-items: center;    
+}
+
+.optionUser {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  border: 2px solid black; /* Adds a 2px solid black border */
+  padding: 10px; /* Adds some spacing inside the border for better appearance */
+  border-radius: 5px; /* Optional: adds rounded corners */
+  background-color: rgb(69, 163, 124);
+}
+
+.selected {
+  background-color: rgb(132, 127, 209);
+}
+
+.optionUserTools {
+  display: flex;
+}
+
+.optionUserToolsBrowseUserList {
+  display: flex;
+  border: 3px solid black; /* Adds a 2px solid black border */
+}
+
+.showUserInfo {
+  background-color: rgb(0, 217, 255);
+  border: 2px solid black; /* Adds a 2px solid black border */
+  padding: 10px; /* Adds some spacing inside the border for better appearance */
+  border-radius: 5px; /* Optional: adds rounded corners */
+}
+
+.userInfoContainer {
+  max-width: 400px;
+  max-height: 300px;
+  min-height: 300px;
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+  text-align: center;
+  border: 2px solid black; /* Adds a 2px solid black border */
+  padding: 10px; /* Adds some spacing inside the border for better appearance */
+  border-radius: 5px; /* Optional: adds rounded corners */
+  overflow: hidden; /* Prevents the container itself from scrolling */
+  background-color: rgb(78, 216, 158);
+}
+
+.userInfoContainer ul {
+  overflow-y: auto; /* Enables vertical scrolling for the list */
+  min-height: 180px;
+  max-height: 200px; /* Restricts height of the scrollable area */
+  width: 100%; /* Optional: ensure the list spans the container's width */
+  padding: 0; /* Removes default padding from the list */
+  margin: 0; /* Removes default margin from the list */
+  border: 2px solid black; /* Adds a 2px solid black border */
+  padding: 10px; /* Adds some spacing inside the border for better appearance */
+  border-radius: 5px; /* Optional: adds rounded corners */
+  list-style-type: none; /* Removes bullet points from the list items */
+}
+
+.addFriendButton {
+  background: url('C:\Users\mikah\OneDrive\Bureaublad\ReactSite\my-app\src\Img\addFriend.jpg') no-repeat center center;
+  background-size: contain;
+  border: 5px solid black; /* Adds a 2px solid black border */
+  padding: 10px; /* Adds some spacing inside the border for better appearance */
+  border-radius: 5px; /* Optional: adds rounded corners */
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+}
+
+.addFriendButton:hover {
+  opacity: 0.5;
+}
+
+
+.userListAndInfo {
+  display: flex;
+  align-items: center;
+}
+
+.favoriteButton {
+  background: none;
+  border: none;
+  color: gold;
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.username {
+  font-size: 1.3em;
+  font-weight: bold;
+  padding: 5px;
+  display: block;
+}
+
+
+.genreLabels {
+  display: flex;
+  gap: 5px; /* Space between genres */
+  margin-left: 10px;
+
+}
+
+.genreLabel {
+  background-color: #4caf50; /* Green theme */
+  color: white;
+  padding: 4px 8px;
+  border: 1px solid black; /* Adds a 2px solid black border */
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  display: inline-block;
+}
+
+.addFriendButton {
+  background-color: #007bff; /* Blue button */
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.addFriendButton:hover {
+  background-color: #0056b3;
+}
+
+/* 🔍 Search Bar Styling */
+.searchContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.searchInput {
+  width: 100%; /* Makes the input fully fill the container */
+  max-width: 400px; /* Restricts it from being too wide on larger screens */
+  padding: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 5px;
+  outline: none;
+}
+
+.noUsersFound {
+  text-align: center;
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #ff4d4d; /* Red text to indicate no results */
+  background-color: #ffe6e6; /* Light red background for visibility */
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+.userNameViewProfileContainer{
+  display: flex;
+  flex-direction: row;
+  padding: 10px;
+}
+
+.viewProfileButton {
+  font-size: 70%; 
+  padding: 2px 6px;
+  height: auto; 
+  line-height: 1; 
+}
+
+
+

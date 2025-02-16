@@ -1,0 +1,146 @@
+/* General styling */
+.App {
+  display: flex; /* Ensures proper alignment */
+  flex-direction: column;
+  align-items: center;
+  margin-top: 60px; 
+}
+
+.titleHome {
+  width: 100%;
+  border: none;
+  text-align: center;
+  align-items: center;
+}
+
+/* Header styling */
+.App-header {
+  position: fixed;
+  background-color: #282c34;
+  white-space: nowrap; 
+  color: white;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  position: fixed;
+  top: 0px; /* Adjusted to prevent gaps */
+  height: auto; /* Adjusted for dynamic sizing */
+  width: 100%;
+  min-height: 80px; 
+  z-index: 1000;
+  border: 2px solid black;
+  padding: 10px 20px; /* Reduced padding for better fit */
+  border-radius: 5px;
+}
+
+/* Main content area */
+.mainScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 100px; /* Increased margin to prevent overlap */
+  padding: 20px;
+  width: 100%;
+}
+
+/* Profile container */
+.profile-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  font-family: 'Arial', sans-serif;
+  background: #767de6;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 90%; /* Adjusted width for better centering */
+  max-width: 500px; /* Prevents excessive stretching */
+  border: 3px solid black;
+}
+
+/* Back Button */
+.back-button {
+  background-color: #007bff;
+  color: white;
+  font-size: 16px;
+  padding: 8px 15px; /* Reduced padding */
+  border: 2px solid black;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  margin-bottom: 15px; /* Adjusted spacing */
+}
+
+.back-button:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+}
+
+/* Profile Content */
+.profile-content {
+  display: flex;
+  flex-direction: column; /* Stack elements vertically */
+  justify-content: center; /* Center vertically */
+  align-items: center; /* Center horizontally */
+  text-align: center; /* Ensure text stays centered */
+  
+  background: #93b6dd; /* Fixed broken background */
+  padding: 20px; /* Better spacing */
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%; /* Make it fit container */
+  max-width: 500px; /* Slightly wider for better balance */
+
+  border: 1px solid black;
+}
+
+.profile-content h1 {
+  color: #333;
+  font-size: 24px;
+}
+
+.profile-content p {
+  color: #555;
+  font-size: 16px;
+  margin: 8px 0;
+  padding: 20px;
+}
+
+/* Friends List */
+.friends-list {
+  list-style-type: none;
+  padding: 0;
+  width: 100%;
+}
+
+.friend-item {
+  background: #ddd;
+  padding: 8px; /* Adjusted padding */
+  border-radius: 5px;
+  margin: 5px 0; /* Adjusted margins */
+  text-align: center;
+  font-size: 16px;
+  width: 100%;
+  max-width: 400px; /* Prevents overlap */
+}
+
+.addFriendButton {
+  background-color: #007bff; /* Blue button */
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.addFriendButton:hover {
+  background-color: #0056b3;
+}
+
+.addFriendContainer {
+  display: flex;
+  border: 3px solid black; /* Adds a 2px solid black border */
+}
+
+
