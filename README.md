@@ -107,20 +107,29 @@ Frequently accessed data (e.g., watchlists, friend lists) is cached server-side 
 
 ## Preview
 
+
+### Login
 ![Login](Preview/image-1.png)
 
+### Register
 ![Register](Preview/image-2.png)
 
+### Add Movies
 ![MovieAdder](Preview/image-3.png)
 
+### Browse Accounts
 ![BrowseAccounts](Preview/image-4.png)
 
+### View other profiles
 ![ViewProfiles](Preview/image-5.png)
 
+### Maintain progress on your watchlist
 ![MaintainWatchList](Preview/image-6.png)
 
+### Edit your profile
 ![EditProfile](Preview/image-7.png)
 
+### User friendly interface
 ![CachedData](Preview/image-8.png)
 
 ## ⚙️ Setup Instructions
