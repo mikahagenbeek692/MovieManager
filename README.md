@@ -105,48 +105,49 @@ Frequently accessed data (e.g., watchlists, friend lists) is cached server-side 
 
 ---
 
+## Preview
+
+![Login](Preview\image-1.png)
+
+![Register](Preview\image-2.png)
+
+![MovieAdder](Preview\image-3.png)
+
+![BrowseAccounts](Preview\image-4.png)
+
+![ViewProfiles](Preview\image-5.png)
+
+![MaintainWatchList](Preview\image-6.png)
+
+![EditProfile](Preview\image-7.png)
+
+![CachedData](Preview\image-8.png)
+
 ## ⚙️ Setup Instructions
 
-### 1. Clone the Repository
+### 1. Prerequisites
+
+Before you begin, make sure you have the following installed:
+
+- ✅ [Docker](https://www.docker.com/get-started)
+- ✅ [Docker Compose](https://docs.docker.com/compose/install/)
+
+> 📝 This app uses Docker to run the frontend, backend, database, and ML recommendation engine in isolated containers.
+
+---
+
+### 2. Clone the Repository
 
 ```bash
-git clone https://github.com/mikahagenbeek/movie-manager.git
-cd movie-manager
+git clone https://github.com/mikahagenbeek692/MovieManager.git
+cd MovieManager
 ```
 
-### 2. Start the App Using Docker
+---
 
-Make sure **Docker** and **Docker Compose** are installed on your machine. Then run:
+### 3. Set Up Environment Variables
 
-```bash
-docker-compose up --build
-```
-
-This will:
-
-- 🗄️ Start the MySQL database  
-- 🛠️ Start the backend Express.js server (Node)  
-- 🧩 Start the React frontend  
-- 🤖 Start the FastAPI ML recommendation service  
-
-### 3. Access the App
-
-- Visit the frontend: [http://localhost:3000](http://localhost:3000)  
-- Backend API: [http://localhost:5000](http://localhost:5000)  
-- Recommendation API: [http://localhost:8000](http://localhost:8000)  
-
-### 4. Optional: Seed the Database
-
-To populate your database with movies and test users, you can either:
-
-- Manually insert SQL via a DB tool (e.g., DBeaver, MySQL CLI), or  
-- Extend the backend with a `/seed` endpoint (**recommended for development only**)
-
-### 5. Environment Variables
-
-This project uses environment variables to securely store sensitive configuration data.
-
-Before running the app, create a `.env` file in the root of the project (or use the provided `.env.example` as a template) and set the following values:
+Create a `.env` file in the root directory (or rename `.env.example` to `.env`) and fill in your MySQL and secret values:
 
 ```env
 DB_USER=your_mysql_username
@@ -155,7 +156,58 @@ DB_NAME=projectapi
 SECRET_KEY=your_secure_secret_key
 ```
 
-### 6. Development Tips
+> 🛡️ **Never commit your `.env` file** to version control. It's already ignored via `.gitignore`.
+
+---
+
+### 4. Build and Start the App Using Docker
+
+Run the following to build and start all services:
+
+```bash
+docker-compose up --build
+```
+
+This will:
+
+- 🗄️ Spin up the MySQL database  
+- 🛠️ Start the backend Express server (Node.js)  
+- 🧩 Start the React frontend  
+- 🤖 Start the FastAPI ML recommendation engine  
+
+> ⏱️ First build may take a couple of minutes as all images are built and dependencies are installed.
+
+---
+
+### 5. Access the App
+
+Once all containers are running, you can access the services:
+
+- 🌐 Frontend: [http://localhost:3000](http://localhost:3000)  
+- 🛠️ Backend API: [http://localhost:5000](http://localhost:5000)  
+- 🤖 Recommendation API: [http://localhost:8000](http://localhost:8000)  
+
+---
+
+### 6. (Optional) Seed the Database with Sample Data
+
+If you want to populate your local database with sample users and movies:
+
+#### Option A: Use MySQL CLI with Docker
+
+```bash
+docker exec -i mysql mysql -u root -p projectapi < databaseSetup.sql
+```
+
+> You'll be prompted to enter the MySQL root password (the one from your `.env` file).
+
+#### Option B: Manually Import via GUI
+
+You can also open `seed.sql` in a tool like **DBeaver**, **MySQL Workbench**, or any other MySQL-compatible database manager.
+
+---
+
+### 7. Development Tips
 
 - 🧾 Backend logs appear in the terminal from Docker Compose  
 - ⚛️ Frontend uses **React Context API** for Auth & Watchlist state  
