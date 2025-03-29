@@ -107,21 +107,21 @@ Frequently accessed data (e.g., watchlists, friend lists) is cached server-side 
 
 ## Preview
 
-![Login](Preview\image-1.png)
+![Login](Preview/image-1.png)
 
-![Register](Preview\image-2.png)
+![Register](Preview/image-2.png)
 
-![MovieAdder](Preview\image-3.png)
+![MovieAdder](Preview/image-3.png)
 
-![BrowseAccounts](Preview\image-4.png)
+![BrowseAccounts](Preview/image-4.png)
 
-![ViewProfiles](Preview\image-5.png)
+![ViewProfiles](Preview/image-5.png)
 
-![MaintainWatchList](Preview\image-6.png)
+![MaintainWatchList](Preview/image-6.png)
 
-![EditProfile](Preview\image-7.png)
+![EditProfile](Preview/image-7.png)
 
-![CachedData](Preview\image-8.png)
+![CachedData](Preview/image-8.png)
 
 ## ⚙️ Setup Instructions
 
