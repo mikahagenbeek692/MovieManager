@@ -1,0 +1,62 @@
+.App {
+    display: inline;
+    margin-top: 60px; 
+  }
+  
+  .titleHome {
+    width: 100%;
+    border: none;
+    text-align: center;
+    align-items: center;
+  }
+  
+  .App-header {
+    position: fixed;
+    background-color: #2b692b;
+    white-space: nowrap; 
+    color: white;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    position: fixed;
+    top: -20px; 
+    height: 10%;
+    width: 100%;
+    min-height: 80px; 
+    z-index: 1000;
+    border: 2px solid black; 
+    padding: 20px; 
+    border-radius: 5px; 
+  }
+  
+  /* Main content area */
+  .mainScreen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 50px; 
+    margin: 20;
+    padding-top: calc(50px + 3vw);
+    position: relative;
+  }
+
+  /* Red outline or different color */
+.highlightedFriendRequests {
+    border: 2px solid red;
+    position: relative;
+  }
+  
+  /* Small badge for the number */
+  .friendRequestBadge {
+    background-color: red;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 50%;
+    padding: 2px 6px;
+    margin-left: 5px;
+    position: absolute;
+    top: -5px;
+    right: -5px;
+  }
+  

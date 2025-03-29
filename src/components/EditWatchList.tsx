@@ -1,7 +1,9 @@
 import axios from 'axios'; // Import axios for API calls
-import { default as React, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { default as React, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthContext.tsx';
 import './EditWatchList.css';
+import { useWatchlist } from './WatchlistContext.tsx';
 
 
 interface Movie {
@@ -21,7 +23,6 @@ interface Movie {
 interface MovieListProps {
     watchList: Movie[];
     setWatchList: React.Dispatch<React.SetStateAction<Movie[]>>;
-    username: string;
 }
 
 interface MovieInfoProps {
@@ -30,13 +31,34 @@ interface MovieInfoProps {
 
 const EditWatchList: React.FC = () => {
 
-    const location = useLocation();
-    const [currentUser, setCurrentUser] = useState<string>(location.state?.message || '');
-    const [watchList, setWatchList] = useState<Movie[]>([]);
+    const { watchList, setWatchList, hasUnsavedChanges, setHasUnsavedChanges, undo, undoStack, pushUndo, clearUndo } = useWatchlist();
     const Navigate = useNavigate();
 
+    const listRef = useRef<HTMLUListElement>(null);
+
+    // useAuth for global csrf token and username
+    const { currentUser, csrfToken, isLoading } = useAuth();
+
+    //save watchlist limit
+        const THROTTLE_MS = 10000; // 10 seconds
+        const [lastSaveTime, setLastSaveTime] = useState<number>(0);
+
+    // labels
     const [years, setYears] = useState<number[]>([])
     const [genres, setGenres] = useState<string[]>([]);
+
+    // notification
+    const [responseNotification, setResponseNotification] = useState<string>("unknown error");
+    const [responseNotificationVisible, toggleResponseNotificationVisible] = useState<boolean>(false);
+    const [isFading, setIsFading] = useState<boolean>(false); 
+
+    // update cache after each watchlist change
+    useEffect(() => {
+        if (currentUser && hasUnsavedChanges) {
+          localStorage.setItem(`watchlist_${currentUser}`, JSON.stringify(watchList));
+        }
+      }, [watchList, hasUnsavedChanges, currentUser]);
+      
 
 
     const fetchWatchList = async () => {
@@ -63,81 +85,54 @@ const EditWatchList: React.FC = () => {
             console.error("Error fetching watchlist:", error);
         }
     };
-    
+
+    const checkAuth = async () => {
+        try {
+            await axios.get('http://localhost:5000/home'); // Protected route
+        } catch (err) {
+            Navigate('/login'); // Redirect to login if not authenticated
+        }
+    };    
 
     useEffect(() => {
-        fetchWatchList();
-        const checkAuth = async () => {
-            try {
-                await axios.get('http://localhost:5000/home'); // Protected route
-            } catch (err) {
-                Navigate('/login'); // Redirect to login if not authenticated
-            }
-        };
-
-        checkAuth();
-    }, [Navigate]);
-
-    const saveWatchListNavigate = async () => {
-        try {
-            const movieTitles = watchList.map(movie => ({
-                id: movie.id,
-                title: movie.title,
-                watched: movie.watched === true,
-                favorite: movie.favorite === true
-            }));
-
-            console.log("Saving watchlist:", { currentUser, movieTitles });
-
-            const response = await axios.post('http://localhost:5000/saveWatchList', {
-                username: currentUser,
-                movieTitles: movieTitles,
-            });
-    
-            console.log("success")
- 
-        } catch (error) {
-            console.error('Error saving watchlist:', error.response ? error.response.data : error.message);
-
-        };
-    }
-    
-
-    const handleLogout = async () => {
-        const confirmLogout = window.confirm("Make sure to save your watchlist before logging out! Click OK to proceed or Cancel to stay.");
-        if (confirmLogout) {
-            await axios.post('http://localhost:5000/logout');
-            Navigate('/login');
+        const cached = localStorage.getItem(`watchlist_${currentUser}`);
+        if (cached) {
+          setWatchList(JSON.parse(cached));
+        } else {
+          fetchWatchList();
         }
-    };
+      
+        checkAuth();
+      }, [Navigate]);
+
+      useEffect(() => {
+              if (!isLoading && !currentUser) {
+                Navigate('/login'); // Redirect if no user or csrf token and done loading
+              }
+            }, [isLoading, currentUser, Navigate]);
+      
 
 
-    const handleNavigate = async (location) => {
-        await saveWatchListNavigate();
-        Navigate(location, { state: { message: currentUser } });
-    };
     return (
-        <div className="App">
-        <header className="App-header">
-            <h1 className='titleHome'>Edit watchlist</h1>
-            <button className="logoutButton" onClick={(e) => handleNavigate("/Home")}>Add movies</button>
-            <button className="logoutButton" onClick={(e) => handleNavigate("/Browse")}>Browse other accounts</button>
-            <button className="logoutButton" onClick={(e) => handleNavigate("/EditWatchList")}>Edit watchlist</button>
-            <button className="logoutButton" onClick={(e) => handleNavigate("/Profile")}>Edit Profile</button>
-            <button className="logoutButton" onClick={handleLogout}>Logout</button>
-        </header>
         <div className='mainScreen'>
-            <MovieList username={currentUser} watchList={watchList} setWatchList={setWatchList}></MovieList>
+            {responseNotificationVisible && <span className={`notification ${isFading ? 'fade-out' : ''}`}>{responseNotification}</span>}
+            {hasUnsavedChanges && (
+                <div className="unsavedNotification">
+                    You have unsaved changes!
+                </div>
+            )}
+            {undoStack.length > 0 && (
+                        <button className="undoButtonEditWatchlist" onClick={() => undo()}>
+                            Undo last change
+                        </button>
+                )}
+            <MovieList watchList={watchList} setWatchList={setWatchList}></MovieList>
+
         </div>
-    </div>
     );  
 
-    function MovieList({ username, watchList, setWatchList}: MovieListProps) {
-
-        const [responseNotification, setResponseNotification] = useState<string>("unknown error");
-        const [responseNotificationVisible, toggleResponseNotificationVisible] = useState<boolean>(false);
+    function MovieList({ watchList, setWatchList}: MovieListProps) {
         const [selectedMovieInfo, setSelectedMovieInfo] = useState<Movie | null>(null);
-        const [isFading, setIsFading] = useState<boolean>(false); 
         const [filteredWatchList, setFilteredWatchList] = useState<Movie[]>(watchList);
         
         // Filters
@@ -156,17 +151,30 @@ const EditWatchList: React.FC = () => {
                     favorite: movie.favorite === true
                 }));
     
-                console.log("Saving watchlist:", { username, movieTitles });
+                console.log("Saving watchlist:", { movieTitles });
     
-                const response = await axios.post('http://localhost:5000/saveWatchList', {
-                    username: username,
-                    movieTitles: movieTitles
-                });
+                const response = await axios.post("http://localhost:5000/saveWatchList", 
+                    { 
+                        username: currentUser, 
+                        movieTitles 
+                    },
+                    {
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRF-Token": csrfToken  // ✅ Include CSRF Token
+                        },
+                        withCredentials: true
+                    }
+                );
         
                 setResponseNotification("Your watchlist was successfully saved!");
+                localStorage.setItem(`watchlist_${currentUser}`, JSON.stringify(watchList));
                 console.log("success")
                 toggleResponseNotificationVisible(true);
                 setIsFading(false); // Ensure no fade-out effect initially
+
+               
+
     
     
         
@@ -198,6 +206,25 @@ const EditWatchList: React.FC = () => {
                 }, 5000);  // Wait for 5 seconds before fading out
             }
         };
+
+        const handleSave = async () => {
+            const now = Date.now();
+            if (now - lastSaveTime < THROTTLE_MS) {
+              alert("You're saving too frequently. Please wait a few seconds before trying again.");
+              return;
+            }
+            setLastSaveTime(now);
+          
+            try {
+              await saveWatchList(); 
+              setHasUnsavedChanges(false);
+              localStorage.setItem('trigger_recommendations', Date.now().toString());
+              localStorage.removeItem('draft_watchlist'); // Clear draft after successful save
+              clearUndo();
+            } catch (error) {
+              console.error("Error saving watchlist:", error);
+            }
+          };
         
         
         useEffect(() => {
@@ -208,13 +235,12 @@ const EditWatchList: React.FC = () => {
                     if(favoriteFilter){
                         return movie.favorite;
                     }
-                    const matchesTitle = movie.title.toLowerCase().includes(inputText.toLowerCase()) ||     // Filter through title and cast
+                    const matchesTitle = movie.title.toLowerCase().includes(inputText.toLowerCase()) ||     
                                          movie.cast.toLowerCase().includes(inputText.toLowerCase()) 
                     const matchesGenre = selectedGenre === "All Genres" || movie.genre.toLowerCase().includes(selectedGenre.toLowerCase());
                     const matchesYear = selectedYear === "All Years" || movie.releaseYear.toString().includes(selectedYear);
                     const matchesWatched = watchedFilter === "All Movies"  || movie.watched.toString() === watchedFilter;
-        
-                    // Return true if all conditions are met
+
                     return matchesTitle && matchesGenre && matchesYear && matchesWatched;
                 })
             )     
@@ -222,13 +248,27 @@ const EditWatchList: React.FC = () => {
         }, [inputText, selectedGenre, selectedYear, watchedFilter, favoriteFilter]);
     
         const handleDeleteMovie = (movie: Movie) => {
+            const scrollTop = listRef.current?.scrollTop ?? 0;
+        
             removeMovie(movie.id);
-            if (selectedMovieInfo === movie)
+        
+            if (selectedMovieInfo === movie) {
                 setSelectedMovieInfo(null);
+            }
+        
+            // Delay scroll restoration until after the DOM updates
+            requestAnimationFrame(() => {
+                if (listRef.current) {
+                    listRef.current.scrollTop = scrollTop;
+                }
+            });
         };
+        
     
         const removeMovie = (movieId: number) => {
+            pushUndo([...watchList]); 
             setWatchList((prevMovies) => prevMovies.filter((movie) => movie.id !== movieId));
+            setHasUnsavedChanges(true);
         };
     
         const handleGenreChange = (genre) => {
@@ -244,32 +284,54 @@ const EditWatchList: React.FC = () => {
         }
     
         const handleWatchedMovie = (movie: Movie) => {
+            const scrollTop = listRef.current?.scrollTop ?? 0;
+        
+            pushUndo([...watchList]); 
             setWatchList((prevWatchList) =>
                 prevWatchList.map((m) =>
                     m.id === movie.id ? { ...m, watched: !m.watched } : m
                 )
             );
+            setHasUnsavedChanges(true);
         
-            // Preserve the selected movie after state update
             setSelectedMovieInfo((prevSelected) => 
-                prevSelected && prevSelected.id === movie.id ? { ...prevSelected, watched: !movie.watched } : prevSelected
+                prevSelected && prevSelected.id === movie.id
+                    ? { ...prevSelected, watched: !movie.watched }
+                    : prevSelected
             );
+        
+            requestAnimationFrame(() => {
+                if (listRef.current) {
+                    listRef.current.scrollTop = scrollTop;
+                }
+            });
         };
+        
         
         const handleFavoriteMovie = (movie: Movie) => {
+            const scrollTop = listRef.current?.scrollTop ?? 0;
+        
+            pushUndo([...watchList]); 
             setWatchList((prevWatchList) =>
                 prevWatchList.map((m) =>
-                    m.id === movie.id
-                        ? { ...m, favorite: !m.favorite }
-                        : { ...m, favorite: false } // Only one movie can be favorite
+                    m.id === movie.id ? { ...m, favorite: !m.favorite } : m
                 )
             );
+            setHasUnsavedChanges(true);
         
-            // Preserve the selected movie after state update
             setSelectedMovieInfo((prevSelected) => 
-                prevSelected && prevSelected.id === movie.id ? { ...prevSelected, favorite: !movie.favorite } : prevSelected
+                prevSelected && prevSelected.id === movie.id
+                    ? { ...prevSelected, favorite: !movie.favorite }
+                    : prevSelected
             );
+        
+            requestAnimationFrame(() => {
+                if (listRef.current) {
+                    listRef.current.scrollTop = scrollTop;
+                }
+            });
         };
+        
         
         
         
@@ -283,7 +345,7 @@ const EditWatchList: React.FC = () => {
             <div className='userListAndInfoAndNotification'>
                 <div className='userListAndInfo'>
                     <div className='watchListTools'>
-                        <button className='saveButtonBrowse' onClick={() => saveWatchList()} >
+                        <button className='saveButtonBrowse' onClick={() => handleSave()} >
                             Save watchlist
                         </button>
                         <input
@@ -335,7 +397,7 @@ const EditWatchList: React.FC = () => {
                         </div>
                     </div>
     
-                    <ul className="userList">
+                    <ul className="userList" ref={listRef}>
                         {filteredWatchList.map((movie) => (
                             <div key={movie.id}>
                                 <li className={movie.watched ? 'optionUser selected' : 'optionUser'}>
@@ -360,7 +422,6 @@ const EditWatchList: React.FC = () => {
                     </ul>
                     <MovieInfo selectedMovieInfo={selectedMovieInfo}></MovieInfo>
                 </div>
-                {responseNotificationVisible && <span className={`notificationEditWatchList ${isFading ? 'fade-out' : ''}`}>{responseNotification}</span>}
             </div>
         );
     }

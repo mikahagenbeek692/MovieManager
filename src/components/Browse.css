@@ -1,45 +1,4 @@
-/* General styling */
-.App {
-  display: inline;
-  margin-top: 60px; 
-}
 
-.titleHome {
-  width: 100%;
-  border: none;
-  text-align: center;
-  align-items: center;
-}
-
-/* Header styling */
-.App-header {
-  position: fixed;
-  background-color: #282c34;
-  white-space: nowrap; 
-  color: white;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  position: fixed; /* Fixes the header at the top */
-  top: -20px; /* Make sure it's at the very top */
-  height: 10%;
-  width: 100%;
-  min-height: 80px; /* Minimum height to maintain accessibility */
-  z-index: 1000; /* Keeps the header on top of other content */
-  border: 2px solid black; /* Adds a 2px solid black border */
-  padding: 20px; /* Adds some spacing inside the border for better appearance */
-  border-radius: 5px; /* Optional: adds rounded corners */
-}
-
-/* Main content area */
-.mainScreen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 50px; /* Add some space so content doesn't overlap with the header */
-  margin: 20;
-  padding-top: calc(50px + 3vw); /* Adjust for dynamic padding */
-}
 
 .logoutButton {
   display: flex;
@@ -63,9 +22,9 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  border: 2px solid black; /* Adds a 2px solid black border */
-  padding: 10px; /* Adds some spacing inside the border for better appearance */
-  border-radius: 5px; /* Optional: adds rounded corners */
+  border: 2px solid black; 
+  padding: 10px; 
+  border-radius: 5px; 
   background-color: rgb(69, 163, 124);
 }
 
@@ -79,14 +38,14 @@
 
 .optionUserToolsBrowseUserList {
   display: flex;
-  border: 3px solid black; /* Adds a 2px solid black border */
+  border: 3px solid black; 
 }
 
 .showUserInfo {
   background-color: rgb(0, 217, 255);
-  border: 2px solid black; /* Adds a 2px solid black border */
-  padding: 10px; /* Adds some spacing inside the border for better appearance */
-  border-radius: 5px; /* Optional: adds rounded corners */
+  border: 2px solid black; 
+  padding: 10px; 
+  border-radius: 5px;
 }
 
 .userInfoContainer {
@@ -98,32 +57,32 @@
   flex-direction: column;
   align-items: center; 
   text-align: center;
-  border: 2px solid black; /* Adds a 2px solid black border */
-  padding: 10px; /* Adds some spacing inside the border for better appearance */
-  border-radius: 5px; /* Optional: adds rounded corners */
-  overflow: hidden; /* Prevents the container itself from scrolling */
+  border: 2px solid black; 
+  padding: 10px; 
+  border-radius: 5px;
+  overflow: hidden;
   background-color: rgb(78, 216, 158);
 }
 
 .userInfoContainer ul {
-  overflow-y: auto; /* Enables vertical scrolling for the list */
+  overflow-y: auto; 
   min-height: 180px;
-  max-height: 200px; /* Restricts height of the scrollable area */
-  width: 100%; /* Optional: ensure the list spans the container's width */
-  padding: 0; /* Removes default padding from the list */
-  margin: 0; /* Removes default margin from the list */
-  border: 2px solid black; /* Adds a 2px solid black border */
-  padding: 10px; /* Adds some spacing inside the border for better appearance */
-  border-radius: 5px; /* Optional: adds rounded corners */
-  list-style-type: none; /* Removes bullet points from the list items */
+  max-height: 200px;
+  width: 100%; 
+  padding: 0;
+  margin: 0;
+  border: 2px solid black;
+  padding: 10px;
+  border-radius: 5px; 
+  list-style-type: none; 
 }
 
 .addFriendButton {
-  background: url('C:\Users\mikah\OneDrive\Bureaublad\ReactSite\my-app\src\Img\addFriend.jpg') no-repeat center center;
+  background: url('../Img/addFriend.jpg') no-repeat center center; 
   background-size: contain;
-  border: 5px solid black; /* Adds a 2px solid black border */
-  padding: 10px; /* Adds some spacing inside the border for better appearance */
-  border-radius: 5px; /* Optional: adds rounded corners */
+  border: 5px solid black; 
+  padding: 10px;
+  border-radius: 5px;
     width: 50px;
     height: 50px;
     cursor: pointer;
@@ -157,16 +116,16 @@
 
 .genreLabels {
   display: flex;
-  gap: 5px; /* Space between genres */
+  gap: 5px;
   margin-left: 10px;
 
 }
 
 .genreLabel {
-  background-color: #4caf50; /* Green theme */
+  background-color: #4caf50;
   color: white;
   padding: 4px 8px;
-  border: 1px solid black; /* Adds a 2px solid black border */
+  border: 1px solid black; 
   border-radius: 12px;
   font-size: 12px;
   font-weight: bold;
@@ -174,7 +133,7 @@
 }
 
 .addFriendButton {
-  background-color: #007bff; /* Blue button */
+  background-color: #007bff; 
   color: white;
   border: none;
   padding: 5px 10px;
@@ -187,7 +146,6 @@
   background-color: #0056b3;
 }
 
-/* 🔍 Search Bar Styling */
 .searchContainer {
   display: flex;
   justify-content: center;
@@ -195,8 +153,8 @@
 }
 
 .searchInput {
-  width: 100%; /* Makes the input fully fill the container */
-  max-width: 400px; /* Restricts it from being too wide on larger screens */
+  width: 100%; 
+  max-width: 400px; 
   padding: 10px;
   font-size: 16px;
   font-weight: bold;

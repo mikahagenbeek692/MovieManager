@@ -1,7 +1,9 @@
 import axios from 'axios';
 import { default as React, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthContext.tsx';
 import './Profile.css';
+import { useWatchlist } from './WatchlistContext.tsx';
 
 interface Friend {
     id: number;
@@ -14,18 +16,31 @@ interface FriendRequest {
 }
 
 const Profile: React.FC = () => {
-    const location = useLocation();
-    const [currentUser, setCurrentUser] = useState<string>(location.state?.message || '');
     const [friendsList, setFriendsList] = useState<Friend[]>([]);
     const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
     const [watchlistPrivacy, setWatchlistPrivacy] = useState<string>('Private');
-    const [description, setDescription] = useState<string>(''); // New state for description
-    const [editingDescription, setEditingDescription] = useState<boolean>(false); // Toggle edit mode
+    const [description, setDescription] = useState<string>(''); // Profile description
+    const [editingDescription, setEditingDescription] = useState<boolean>(false);
     const Navigate = useNavigate();
+
+    const { hasUnsavedChanges } = useWatchlist();
+
+    // useAuth for global csrf token and username
+    const { currentUser, csrfToken, isLoading } = useAuth();
+
+    // New state variables for search filters
+    const [friendSearchTerm, setFriendSearchTerm] = useState<string>('');
+    const [friendRequestSearchTerm, setFriendRequestSearchTerm] = useState<string>('');
 
     useEffect(() => {
         fetchProfileData();
     }, []);
+
+    useEffect(() => {
+            if (!isLoading && !currentUser) {
+              Navigate('/login'); // Redirect if no user or csrf token and done loading
+            }
+          }, [isLoading, currentUser, Navigate]);
 
     const fetchProfileData = async () => {
         try {
@@ -35,30 +50,25 @@ const Profile: React.FC = () => {
             const friendsResponse = await axios.get('http://localhost:5000/api/friends', {
                 params: { username: currentUser },
             });
-    
             setFriendsList(friendsResponse.data);
     
             // Fetch friend requests
             const friendRequestsResponse = await axios.get('http://localhost:5000/api/friendRequests', {
                 params: { username: currentUser },
             });
-    
             setFriendRequests(friendRequestsResponse.data);
     
             // Fetch watchlist privacy
             const privacyResponse = await axios.get('http://localhost:5000/api/watchlistPrivacy', {
                 params: { username: currentUser },
             });
-    
-            console.log('Privacy Response:', privacyResponse.data); // Log the response
+            console.log('Privacy Response:', privacyResponse.data);
             setWatchlistPrivacy(privacyResponse.data.privacy);
     
             // Fetch Profile Description
             const profileResponse = await axios.get('http://localhost:5000/api/userProfile', {
                 params: { username: currentUser },
             });
-    
-            // Ensure we are using the correct field (BIO) from the database
             setDescription(profileResponse.data.BIO || "No description set yet.");
     
             console.log("✅ Profile data fetched successfully:", {
@@ -73,21 +83,6 @@ const Profile: React.FC = () => {
         }
     };
     
-
-    const handleLogout = async () => {
-        const confirmLogout = window.confirm(
-            'Make sure to save your changes before logging out! Click OK to proceed or Cancel to stay.'
-        );
-        if (confirmLogout) {
-            await axios.post('http://localhost:5000/logout');
-            Navigate('/login');
-        }
-    };
-
-    const handleNavigate = async (location: string) => {
-        Navigate(location, { state: { message: currentUser } });
-    };
-
     const handlePrivacyChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newPrivacy = e.target.value;
         setWatchlistPrivacy(newPrivacy);
@@ -96,38 +91,60 @@ const Profile: React.FC = () => {
             await axios.post('http://localhost:5000/api/updateWatchlistPrivacy', {
                 username: currentUser,
                 privacy: newPrivacy,
+            },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-Token": csrfToken
+                },
+                withCredentials: true
             });
-            alert('Privacy settings updated successfully!'); // Replace with a toast notification
+            alert('Privacy settings updated successfully!');
         } catch (error) {
             console.error('Error updating watchlist privacy:', error);
-            alert('Failed to update privacy settings. Please try again. ' + error); // Replace with a toast notification
+            alert('Failed to update privacy settings. Please try again.');
         }
     };
     
     const handleAcceptRequest = async (friendRequestId: number) => {
         try {
-            const response = await axios.post('http://localhost:5000/api/acceptFriendRequest', {
+            await axios.post('http://localhost:5000/api/acceptFriendRequest', {
                 requestId: friendRequestId,
+            },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-Token": csrfToken
+                },
+                withCredentials: true
             });
-            fetchProfileData(); // Re-fetch or update the list directly if possible
-            alert("Succesfully accepted friend request")
+            fetchProfileData(); // Refresh data
+            alert("Successfully accepted friend request");
         } catch (error) {
             console.error('Error accepting friend request:', error);
             alert('Failed to accept friend request. Please try again.');
         }
     };
     
-
     const handleRejectRequest = async (friendRequestId: number) => {
         try {
             await axios.post('http://localhost:5000/api/rejectFriendRequest', {
                 requestId: friendRequestId,
+            },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-Token": csrfToken
+                },
+                withCredentials: true
             });
             fetchProfileData(); // Refresh data
         } catch (error) {
             if (axios.isAxiosError(error) && error.response) {
-                alert(error.response.data.error); // Show the error message from the server
-            } else console.error('Error rejecting friend request:', error);
+                alert(error.response.data.error);
+            } else {
+                console.error('Error rejecting friend request:', error);
+            }
         }
     };
 
@@ -136,13 +153,18 @@ const Profile: React.FC = () => {
     
         if (confirmDelete) {
             try {
-                // Send a request to delete the friend from the database
                 await axios.post('http://localhost:5000/api/deleteFriend', {
                     username: currentUser,
                     friendId: friend.id,
+                },
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-Token": csrfToken
+                    },
+                    withCredentials: true
                 });
     
-                // Remove the friend from the state to reflect the deletion instantly
                 setFriendsList((prevFriendsList) =>
                     prevFriendsList.filter((f) => f.id !== friend.id)
                 );
@@ -159,21 +181,25 @@ const Profile: React.FC = () => {
         try {
             console.log("📨 Sending update request:", {
                 username: currentUser,
-                description: description, // Ensure this is updated
+                description: description,
             });
     
             const response = await axios.post('http://localhost:5000/api/updateProfileDescription', {
                 username: currentUser,
                 description: description,
+            },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-Token": csrfToken
+                },
+                withCredentials: true
             });
     
             if (response.status === 200) {
                 console.log("✅ Profile description updated successfully!");
-    
-                // ✅ **Instantly update state to reflect new description**
                 setEditingDescription(false);
                 setDescription(description);
-    
                 alert("Profile description updated successfully!");
             }
         } catch (error) {
@@ -183,35 +209,16 @@ const Profile: React.FC = () => {
     };
 
     const handleViewProfile = (friend: Friend) => {
-        Navigate(`/browse/${friend.username}`, { state: { message: currentUser } });
+        Navigate(`/browse/${friend.username}`);
     };
-    
-    
-    
-    
 
     return (
-        <div className="App">
-            <header className="App-header">
-                <h1 className="titleHome">Profile Management</h1>
-                <button className="logoutButton" onClick={() => handleNavigate('/Home')}>
-                    Add movies
-                </button>
-                <button className="logoutButton" onClick={() => handleNavigate('/Browse')}>
-                    Browse other accounts
-                </button>
-                <button className="logoutButton" onClick={() => handleNavigate('/EditWatchList')}>
-                    Edit watchlist
-                </button>
-                <button className="logoutButton" onClick={() => handleNavigate('/Profile')}>
-                    Edit Profile
-                </button>
-                <button className="logoutButton" onClick={handleLogout}>
-                    Logout
-                </button>
-            </header>
-
             <div className="mainScreen">
+                {hasUnsavedChanges && (
+                    <div className="unsavedNotification">
+                        You have unsaved changes!
+                    </div>
+                )}
                 <div className="profileContainer">
                     <h2 className="profileHeader">Profile Settings</h2>
 
@@ -256,28 +263,52 @@ const Profile: React.FC = () => {
 
                     <div className="profileSection">
                         <h3>Friends List:</h3>
+                        {/* Search box for friends */}
+                        <input
+                            type="text"
+                            placeholder="Search friends..."
+                            value={friendSearchTerm}
+                            onChange={(e) => setFriendSearchTerm(e.target.value)}
+                            className="searchInput"
+                        />
                         <ul className="friendsList">
-                            {friendsList.length > 0 ? (
-                                friendsList.map((friend) => (
+                            {friendsList.filter(friend =>
+                                friend.username.toLowerCase().includes(friendSearchTerm.toLowerCase())
+                            ).length > 0 ? (
+                                friendsList.filter(friend =>
+                                    friend.username.toLowerCase().includes(friendSearchTerm.toLowerCase())
+                                ).map((friend) => (
                                     <li key={friend.id} className="friendItem">
                                         {friend.username || 'No username available'}
                                         <div className='optionUserTools'>
-                                            <button className='viewProfileInfoButton' onClick={(e) => handleViewProfile(friend)}>Info</button>
-                                            <button className="removeButton" onClick={(e) => handleDeleteFriend(friend)}>Delete</button>
+                                            <button className='viewProfileInfoButton' onClick={() => handleViewProfile(friend)}>Info</button>
+                                            <button className="removeButton" onClick={() => handleDeleteFriend(friend)}>Delete</button>
                                         </div>
                                     </li>
                                 ))
                             ) : (
-                                <span>No friends yet.</span>
+                                <span>No friends found.</span>
                             )}
                         </ul>
                     </div>
 
                     <div className="profileSection">
                         <h3>Friend Requests:</h3>
+                        {/* Search box for friend requests */}
+                        <input
+                            type="text"
+                            placeholder="Search friend requests..."
+                            value={friendRequestSearchTerm}
+                            onChange={(e) => setFriendRequestSearchTerm(e.target.value)}
+                            className="searchInput"
+                        />
                         <ul className="friendRequestsList">
-                            {friendRequests.length > 0 ? (
-                                friendRequests.map((request) => (
+                            {friendRequests.filter(request =>
+                                request.username.toLowerCase().includes(friendRequestSearchTerm.toLowerCase())
+                            ).length > 0 ? (
+                                friendRequests.filter(request =>
+                                    request.username.toLowerCase().includes(friendRequestSearchTerm.toLowerCase())
+                                ).map((request) => (
                                     <li key={request.id} className="friendRequestItem">
                                         <span>{request.username}</span>
                                         <div className='optionUserTools'>
@@ -297,13 +328,12 @@ const Profile: React.FC = () => {
                                     </li>
                                 ))
                             ) : (
-                                <span>No pending friend requests.</span>
+                                <span>No friend requests found.</span>
                             )}
                         </ul>
                     </div>
                 </div>
             </div>
-        </div>
     );
 };
 

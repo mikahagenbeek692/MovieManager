@@ -1,7 +1,9 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthContext.tsx';
 import './Browse.css';
+import { useWatchlist } from './WatchlistContext.tsx';
 
 interface User {
     id: number;
@@ -25,15 +27,8 @@ interface Movie {
     watched: boolean;
     favorite: boolean;
 }
-
-interface UserInfoProps {
-    selectedUser: User | null;
-}
-
 interface UserListProps {
     userList: User[];
-    selectedUser: User | null;
-    setSelectedUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
 
 interface UserSearchBarProps {
@@ -48,15 +43,20 @@ interface FilterProps {
 }
 
 const Browse: React.FC = () => {
-    const location = useLocation();
-    const [currentUser, setCurrentUser] = useState<string>(location.state?.message || '');
-    const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [userList, setUserList] = useState<User[]>([]);
     const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [favoriteGenre, setFavoriteGenre] = useState<string>('All Genres');
     const [availableGenres, setAvailableGenres] = useState<string[]>([]);
     const Navigate = useNavigate();
+
+    // useAuth for global csrf token and username
+    const { currentUser, csrfToken, isLoading } = useAuth();
+
+
+    const { hasUnsavedChanges } = useWatchlist();
+
+
 
     const fetchUsersWithWatchlists = async () => {
         try {
@@ -84,6 +84,8 @@ const Browse: React.FC = () => {
 
     // 🔍 Apply search and filter dynamically
     useEffect(() => {
+
+        
         setFilteredUsers(
             userList.filter(user => 
                 user.username.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -92,55 +94,29 @@ const Browse: React.FC = () => {
         );
     }, [searchTerm, favoriteGenre, userList]); 
 
-    const handleLogout = async () => {
-        const confirmLogout = window.confirm("Make sure to save your watchlist before logging out! Click OK to proceed or Cancel to stay.");
-        if (confirmLogout) {
-            await axios.post('http://localhost:5000/logout');
-            Navigate('/login');
-        }
-    };
-
     const handleNavigate = (location: string) => {
-        Navigate(location, { state: { message: currentUser } });
+        Navigate(location);
     };
 
-    const handleAddFriend = async (friend: User) => {
-        try {
-            const confirmAdd = window.confirm(`Are you sure you want to send a friend request to ${friend.username}?`);
-            if (confirmAdd) {
-                await axios.post('http://localhost:5000/api/sendFriendRequest', {
-                    senderUsername: currentUser,
-                    receiverUsername: friend.username,
-                });
-                alert(`Friend request sent to ${friend.username}!`);
+    useEffect(() => {
+            if (!isLoading && !currentUser) {
+              Navigate('/login'); // Redirect if no user or csrf token and done loading
             }
-        } catch (error: any) {
-            if (axios.isAxiosError(error) && error.response) {
-                alert(error.response.data.error);
-            } else {
-                console.error('Error sending friend request:', error);
-                alert('Failed to send friend request. Please try again.');
-            }
-        }
-    };
+          }, [isLoading, currentUser, Navigate]);
+
 
     return (
-        <div className="App">
-            <header className="App-header">
-                <h1 className="titleHome">Browse other accounts</h1>
-                <button className="logoutButton" onClick={() => handleNavigate("/Home")}>Add movies</button>
-                <button className="logoutButton" onClick={() => handleNavigate("/Browse")}>Browse other accounts</button>
-                <button className="logoutButton" onClick={() => handleNavigate("/EditWatchList")}>Edit watchlist</button>
-                <button className="logoutButton" onClick={() => handleNavigate("/Profile")}>Edit Profile</button>
-                <button className="logoutButton" onClick={handleLogout}>Logout</button>
-            </header>
             
             <div className="mainScreen">
+                {hasUnsavedChanges && (
+                    <div className="unsavedNotification">
+                        You have unsaved changes!
+                    </div>
+                )}
                 <Filters favoriteGenre={favoriteGenre} setFavoriteGenre={setFavoriteGenre} availableGenres={availableGenres} />
                 <UserSearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-                <UserList userList={filteredUsers} selectedUser={selectedUser} setSelectedUser={setSelectedUser} />
+                <UserList userList={filteredUsers} />
             </div>
-        </div>
     );
 
     function Filters({ favoriteGenre, setFavoriteGenre, availableGenres }: FilterProps) {
@@ -176,28 +152,7 @@ const Browse: React.FC = () => {
         );
     }
 
-    function UserInfo({ selectedUser }: UserInfoProps) {
-        if (!selectedUser) {
-            return (
-                <div className="userInfoContainer">
-                    <h2>User Biography</h2>
-                    <h3>Please select a user to view their watchlist.</h3>
-                </div>
-            );
-        }
-
-
-        return (
-            <div className="userInfoContainer">
-                <h2>{selectedUser.username}'s Biography</h2>
-                <ul>
-                    {selectedUser.bio}
-                </ul>
-            </div>
-        );
-    }
-
-    function UserList({ userList, selectedUser, setSelectedUser }: UserListProps) {
+    function UserList({ userList }: UserListProps) {
         return (
             <div className="userListAndInfo">
                 <ul className="userList">
@@ -205,12 +160,12 @@ const Browse: React.FC = () => {
                         <li className="noUsersFound">No users found matching your criteria.</li>
                     ) : (
                         userList.map((user) => (
-                            <li key={user.id} className={`optionUser${selectedUser?.id === user.id ? ' selected' : ''}`} onClick={() => setSelectedUser(user)}>
+                            <li key={user.id} className={`optionUser`}>
                                 <div className="userDetails">
                                     <span className="username">{user.username}</span>
                                     
     
-                                    {/* ✅ Only display genres if available */}
+                                    {/* Only display genres if available */}
                                     {user.favoriteGenres && user.favoriteGenres.trim() !== "" ? (
                                         <div className="genreLabels">
                                             {user.favoriteGenres.split(",").map((genre, index) => (
@@ -226,21 +181,11 @@ const Browse: React.FC = () => {
                                 
                                 <div className='optionUserToolsBrowse'>
                                     <button className='viewProfileButton' onClick={() => handleNavigate(`/browse/${user.username}`)}>Info</button>
-                                    <div className="addFriendButtonContainer">
-                                        <button
-                                            className="addFriendButton"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleAddFriend(user);
-                                            }}
-                                        />
-                                    </div>
                                 </div>
                             </li>
                         ))
                     )}
                 </ul>
-                <UserInfo selectedUser={selectedUser} />
             </div>
         );
     }

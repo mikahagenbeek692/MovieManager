@@ -1,37 +1,110 @@
-const jwt = require('jsonwebtoken');
-const express = require('express');
-const mysql = require('mysql2/promise');
-const bodyParser = require('body-parser');
-const bcrypt = require('bcrypt');
-const cookieParser = require('cookie-parser');
-const cors = require('cors');
-const NodeCache = require('node-cache');
+import axios from 'axios';
+import bcrypt from 'bcryptjs';
+import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import csrf from 'csurf';
+import dotenv from 'dotenv';
+import express from 'express';
+import rateLimit from 'express-rate-limit';
+import { body, validationResult } from 'express-validator';
+import helmet from 'helmet';
+import jwt from 'jsonwebtoken';
+import mysql from 'mysql2/promise';
+import NodeCache from 'node-cache';
 
-const SECRET_KEY = 'your_secret_key';
+
+
+
+const SECRET_KEY = process.env.SECRET_KEY || 'fallback_secret_key';
 const app = express();
 const port = 5000;
 const cache = new NodeCache({ stdTTL: 300, checkperiod: 320 }); // Cache expires in 5 minutes
 
+const csrfProtection = csrf({ cookie: true });
+
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // Max 5 failed login attempts per IP
+    message: "Too many login attempts. Please try again later.",
+    handler: (req, res) => {
+        const retryAfter = Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000);
+        res.status(429).json({
+            message: "Too many login attempts! Try again later.",
+            retryAfter: retryAfter // Send remaining time in seconds
+        });
+    },
+    skipSuccessfulRequests: true, // ✅ We will reset manually after a successful login
+    standardHeaders: true, // Return rate limit info in headers
+    legacyHeaders: false, // Disable `X-RateLimit-*` headers
+});
+
+
+
 // CORS configuration
 const corsOptions = {
     origin: 'http://localhost:3000',
-    credentials: true,
+    credentials: true,  
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], 
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'] 
 };
 
 // Middleware
-app.use(bodyParser.json());
-app.use(cookieParser());
-app.use(cors(corsOptions));
+app.use(helmet()); // Secure HTTP headers
+app.use(cors(corsOptions)); // Enable CORS first
+app.use(cookieParser()); // Parse cookies
+app.use(bodyParser.json()); // Parse JSON request body
+
+dotenv.config();
+
+// Apply CSRF to everything *except* /login and /register
+app.use((req, res, next) => {
+    const skipCSRF = ['/login', '/register'];
+    if (skipCSRF.includes(req.path)) return next();
+    return csrfProtection(req, res, next);
+  });
+  
+
+
 
 // MySQL connection pool
 const db = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: 'PASSWORD',
-    database: 'projectapi',
+    host: 'mysql', 
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'projectapi',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
+  });
+
+  app.get("/api/recommendations", async (req, res) => {
+    const { username } = req.query; // Get the username from the query parameters
+
+    if (!username) {
+        return res.status(400).json({ error: "Username is required." });
+    }
+
+    try {
+        // Fetch the user ID based on the username
+        const [userResults] = await db.query('SELECT id FROM users WHERE username = ?', [username]);
+
+        if (userResults.length === 0) {
+            return res.status(404).json({ error: "User not found." });
+        }
+
+        const userId = userResults[0].id;
+
+        // Fetch recommendations for the user
+        const response = await axios.get(`http://recommendation_api:8000/recommend/${userId}`);
+        res.json(response.data);
+    } catch (error) {
+        console.error("Error fetching recommendations:", error);
+        res.status(500).json({ error: "Error fetching recommendations" });
+    }
+});
+app.get('/csrf-token', (req, res) => {
+    res.json({ csrfToken: req.csrfToken() });
 });
 
 // Authenticate middleware
@@ -49,6 +122,26 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
+app.get('/me', authenticateToken, async (req, res) => {
+    try {
+        const username = req.user.username; // From decoded JWT
+
+        const [user] = await db.query('SELECT username FROM users WHERE username = ?', [username]);
+
+        if (user.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.status(200).json({
+            username: user[0].username
+        });
+    } catch (err) {
+        console.error("❌ Error in /me route:", err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+
 app.get('/home', authenticateToken, (req, res) => {
     res.status(200).json({ message: `Welcome, ${req.user.username}!` });
 });
@@ -58,21 +151,74 @@ app.post('/logout', (req, res) => {
     res.status(200).json({ message: 'Logged out successfully' });
 });
 
-app.post('/register', async (req, res) => {
-    const { username, password, email } = req.body;
-    try {
-        const [results] = await db.query('SELECT * FROM users WHERE username = ? OR email = ?', [username, email]);
-        if (results.length > 0) {
-            return res.status(400).json({ message: 'Username or Email already in use' });
+app.post(
+    '/register',
+    csrfProtection,
+    [
+        // Validate & sanitize username
+        body('username')
+            .trim()
+            .isLength({ min: 3, max: 20 })
+            .withMessage('Username must be between 3 and 20 characters')
+            .matches(/^[a-zA-Z0-9_]+$/)
+            .withMessage('Username can only contain letters, numbers, and underscores'),
+
+        // Validate & sanitize email
+        body('email')
+            .trim()
+            .isEmail()
+            .withMessage('Invalid email format')
+            .normalizeEmail(),
+
+        // Validate & sanitize password
+        body('password')
+            .isLength({ min: 8 })
+            .withMessage('Password must be at least 8 characters long')
+            .matches(/[A-Z]/)
+            .withMessage('Password must contain at least one uppercase letter')
+            .matches(/[a-z]/)
+            .withMessage('Password must contain at least one lowercase letter')
+            .matches(/\d/)
+            .withMessage('Password must contain at least one number')
+            .matches(/[@$!%*?&#]/)
+            .withMessage('Password must contain at least one special character'),
+    ],
+    async (req, res) => {
+        // Check for validation errors
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-        await db.query('INSERT INTO users (username, password_hash, email) VALUES (?, ?, ?)', [username, hashedPassword, email]);
-        res.status(200).json({ message: 'User registered successfully' });
-    } catch (err) {
-        res.status(500).json({ message: 'Server error' });
+        const { username, password, email } = req.body;
+
+        try {
+            // Prevent duplicate usernames or emails
+            const [results] = await db.query(
+                'SELECT id FROM users WHERE username = ? OR email = ?',
+                [username, email]
+            );
+            if (results.length > 0) {
+                return res.status(400).json({ message: 'Username or Email already in use' });
+            }
+
+            // Hash password securely
+            const hashedPassword = await bcrypt.hash(password, 14);
+
+            // Insert new user into the database
+            await db.query(
+                'INSERT INTO users (username, password_hash, email) VALUES (?, ?, ?)',
+                [username, hashedPassword, email]
+            );
+
+            res.status(201).json({ message: 'User registered successfully' });
+        } catch (err) {
+            console.error('❌ Error during registration:', err);
+            res.status(500).json({ message: 'Server error' });
+        }
     }
-});
+);
+
 
 // 🚀 Caching helper function
 const getFromCacheOrDB = async (cacheKey, dbQuery, queryParams = []) => {
@@ -92,34 +238,56 @@ const getFromCacheOrDB = async (cacheKey, dbQuery, queryParams = []) => {
     }
 };
 
-// ✅ POST route for login
-app.post('/login', async (req, res) => {
+app.post('/login', loginLimiter, async (req, res) => {
     const { username, password } = req.body;
+
+    console.log("Login attempt for:", username);
+
     try {
+        // 1. Fetch user details
         const [results] = await db.query('SELECT * FROM users WHERE username = ?', [username]);
-        if (results.length === 0) return res.status(404).json({ message: 'User not found' });
+        if (results.length === 0) {
+            console.warn("User not found:", username);
+            return res.status(404).json({ message: 'User not found' });
+        }
 
         const user = results[0];
+        console.log("✅ User found:", user.username);
+
+        // 2. Check password
         const match = await bcrypt.compare(password, user.password_hash);
-        if (!match) return res.status(401).json({ message: 'Invalid username or password' });
+        if (!match) {
+            console.warn("Incorrect password for:", username);
+            return res.status(401).json({ message: 'Invalid username or password' });
+        }
 
+        console.log("Password correct for:", username);
+
+        // 3. Generate JWT token
         const token = jwt.sign({ username: user.username }, SECRET_KEY, { expiresIn: '1h' });
+        console.log("🔑 JWT created for:", username);
 
+        // 4. Set token as HTTP-only cookie
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'Lax',
         });
 
-        console.log(`🔑 Token generated for ${username}`);
+        console.log("JWT token set in cookie for:", username);
 
+        // 5. Return basic success response
         res.status(200).json({ message: 'Login successful' });
+
     } catch (err) {
+        console.error('❌ Database error during login:', err);
         res.status(500).json({ message: 'Database error' });
     }
 });
 
-// ✅ GET Watchlist
+
+
+
 app.get('/api/getWatchList', async (req, res) => {
     const { username } = req.query;
     if (!username) {
@@ -146,7 +314,7 @@ app.get('/api/getWatchList', async (req, res) => {
 });
 
 
-// ✅ Save Watchlist
+// Save Watchlist
 app.post('/saveWatchList', async (req, res) => {
     const { username, movieTitles } = req.body;
 
@@ -184,13 +352,13 @@ app.post('/saveWatchList', async (req, res) => {
                 [values]
             );
 
-            // 🚀 Fetch Movie Genres to Determine Favorite Genres
+            // Fetch Movie Genres to Determine Favorite Genres
             const movieIds = movieTitles.map(movie => movie.id);
             const [moviesData] = await connection.query(
                 `SELECT id, genre FROM movies WHERE id IN (?)`, [movieIds]
             );
 
-            // 🚀 Count Genres Only for Watched Movies
+            // Count Genres Only for Watched Movies
             moviesData.forEach(movie => {
                 const movieGenres = movie.genre.split(',').map(g => g.trim());
                 movieGenres.forEach(genre => {
@@ -210,7 +378,7 @@ app.post('/saveWatchList', async (req, res) => {
             favoriteGenres = sortedGenres.slice(0, 2).join(', ');
         }
 
-        // 🚀 Update User's Favorite Genres
+        // Update User's Favorite Genres
         await connection.query(
             'UPDATE users SET favorite_genres = ? WHERE id = ?',
             [favoriteGenres, userId]
@@ -218,10 +386,11 @@ app.post('/saveWatchList', async (req, res) => {
 
         await connection.commit();
 
-        // 🚀 Invalidate Cache
+        // Invalidate Cache
         cache.del(`watchlist_${username}`);
         cache.del(`favorite_genres_${username}`);
         cache.del(`usersWithWatchlists`);  // 🔥 Invalidates all watchlists!
+        cache.del('all_users');
 
         console.log(`🗑️ Cache invalidated for ${username} & usersWithWatchlists`);
 
@@ -235,12 +404,7 @@ app.post('/saveWatchList', async (req, res) => {
     }
 });
 
-
-
-
-
-
-// ✅ Fetch Friends List
+// Fetch Friends List
 app.get('/api/friends', async (req, res) => {
     const { username } = req.query;
 
@@ -290,7 +454,7 @@ app.get('/api/friends', async (req, res) => {
 });
 
 
-// ✅ Fetch Users With Watchlists
+// Fetch Users With Watchlists
 app.get('/api/users', async (req, res) => {
     try {
         // ✅ Check Cache First
@@ -300,13 +464,13 @@ app.get('/api/users', async (req, res) => {
             return res.status(200).json(cachedData);
         }
 
-        // ✅ Fetch fresh data if not cached
+        // Fetch fresh data if not cached
         const [results] = await db.query(
             `SELECT id AS user_id, username, email, favorite_genres, BIO
              FROM users`
         );
 
-        // ✅ Format response
+        // Format response
         const allUsers = results.map(user => ({
             id: user.user_id,
             username: user.username,
@@ -315,7 +479,7 @@ app.get('/api/users', async (req, res) => {
             bio: user.BIO || "This user has no description yet"
         }));
 
-        // ✅ Store in cache for next requests
+        // Store in cache for next requests
         cache.set('all_users', allUsers);
         console.log("🔄 Cached all users for 5 minutes");
 
@@ -329,7 +493,7 @@ app.get('/api/users', async (req, res) => {
 
 
 
-// ✅ Update Watchlist Privacy
+// Update Watchlist Privacy
 app.post('/api/updateWatchlistPrivacy', async (req, res) => {
     const { username, privacy } = req.body;
 
@@ -351,7 +515,7 @@ app.post('/api/updateWatchlistPrivacy', async (req, res) => {
             return res.status(404).json({ error: 'User not found.' });
         }
 
-        // **✅ Invalidate Cache** (Force refresh of public users)
+        // **Invalidate Cache** (Force refresh of public users)
         cache.del('public_users_watchlists');
 
         console.log(`🔄 Public users cache invalidated after updating privacy for ${username}`);
@@ -448,13 +612,13 @@ app.get('/api/friendRequests', async (req, res) => {
     }
 
     try {
-        // ✅ Fetch user ID based on username
+        // Fetch user ID based on username
         const [userResult] = await db.execute('SELECT id FROM users WHERE username = ?', [username]);
         if (userResult.length === 0) return res.status(404).json({ error: 'User not found.' });
 
         const userId = userResult[0].id;
 
-        // ✅ Fetch pending friend requests (including sender's username)
+        // Fetch pending friend requests (including sender's username)
         const [friendRequests] = await db.execute(
             `SELECT fr.id AS request_id, u.id AS sender_id, u.username AS sender_username 
              FROM friend_requests fr
@@ -463,7 +627,7 @@ app.get('/api/friendRequests', async (req, res) => {
             [userId]
         );
 
-        // ✅ Ensure username is included
+        //  Ensure username is included
         const formattedFriendRequests = friendRequests.map(request => ({
             id: request.request_id,
             username: request.sender_username || "Unknown"
@@ -479,63 +643,81 @@ app.get('/api/friendRequests', async (req, res) => {
 
 app.post('/api/sendFriendRequest', async (req, res) => {
     const { senderUsername, receiverUsername } = req.body;
-
+    
+    // Prevent self-request
     if (senderUsername === receiverUsername) {
-        return res.status(400).json({ error: 'You cannot send a friend request to yourself.' });
+      return res.status(400).json({ error: 'You cannot send a friend request to yourself.' });
     }
-
+  
     try {
-        // Check if both users exist
-        const users = await getFromCacheOrDB(
-            `users_${senderUsername}_${receiverUsername}`,
-            'SELECT id, username FROM users WHERE username IN (?, ?)',
-            [senderUsername, receiverUsername]
-        );
-
-        if (users.length !== 2) {
-            return res.status(404).json({ error: 'One or both users not found.' });
-        }
-
-        const sender = users.find(user => user.username === senderUsername);
-        const receiver = users.find(user => user.username === receiverUsername);
-
-        // Check if they are already friends
-        const existingFriend = await db.execute(
-            `SELECT * FROM friends WHERE 
-             (user_id = ? AND friend_id = ?) OR 
-             (user_id = ? AND friend_id = ?)`,
-            [sender.id, receiver.id, receiver.id, sender.id]
-        );
-
-        if (existingFriend[0].length > 0) {
-            return res.status(400).json({ error: 'You are already friends with this user.' });
-        }
-
-        // Check if a friend request already exists
-        const existingRequest = await db.execute(
-            'SELECT * FROM friend_requests WHERE sender_id = ? AND receiver_id = ?',
-            [sender.id, receiver.id]
-        );
-
-        if (existingRequest[0].length > 0) {
-            return res.status(400).json({ error: 'Friend request already sent.' });
-        }
-
-        // Insert a new friend request
+      // Fetch both users' IDs
+      const [users] = await db.execute(
+        'SELECT id, username FROM users WHERE username IN (?, ?)',
+        [senderUsername, receiverUsername]
+      );
+      if (users.length < 2) {
+        return res.status(404).json({ error: 'One or both users not found.' });
+      }
+      const sender = users.find(u => u.username === senderUsername);
+      const receiver = users.find(u => u.username === receiverUsername);
+  
+      // Check if they are already friends
+      const [existingFriends] = await db.execute(
+        `SELECT * FROM friends
+         WHERE (user_id = ? AND friend_id = ?)
+            OR (user_id = ? AND friend_id = ?)`,
+        [sender.id, receiver.id, receiver.id, sender.id]
+      );
+      if (existingFriends.length > 0) {
+        return res.status(400).json({ error: 'You are already friends.' });
+      }
+  
+      // Check if there's an existing friend request from the receiver to the sender
+      const [reverseRequest] = await db.execute(
+        `SELECT * FROM friend_requests
+         WHERE sender_id = ? AND receiver_id = ?`,
+        [receiver.id, sender.id]
+      );
+  
+      if (reverseRequest.length > 0) {
+        // If a reverse request exists, automatically accept and create the friendship
+        await db.execute('UPDATE friend_requests SET status = "accepted" WHERE id = ?', [reverseRequest[0].id]);
         await db.execute(
-            'INSERT INTO friend_requests (sender_id, receiver_id) VALUES (?, ?)',
-            [sender.id, receiver.id]
+          'INSERT INTO friends (user_id, friend_id) VALUES (?, ?), (?, ?)',
+          [sender.id, receiver.id, receiver.id, sender.id]
         );
+        cache.del(`friendRequests_${receiver.id}`);  // Invalidate pending requests for receiver
+        cache.del(`friends_${sender.id}`);            // Invalidate friends list for sender
+        cache.del(`friends_${receiver.id}`);  
+        return res.json({ message: 'Friend request auto-accepted. You are now friends.' });
+      }
+  
+      // If no reverse request exists, create a new friend request
+      const [existingRequest] = await db.execute(
+        'SELECT * FROM friend_requests WHERE sender_id = ? AND receiver_id = ?',
+        [sender.id, receiver.id]
+      );
+  
+      if (existingRequest.length > 0) {
+        return res.status(400).json({ error: 'Friend request already sent.' });
+      }
+  
+      await db.execute(
+        'INSERT INTO friend_requests (sender_id, receiver_id) VALUES (?, ?)',
+        [sender.id, receiver.id]
+      );
 
-        // Invalidate the friend requests cache for the receiver
-        cache.del(`friendRequests_${receiver.id}`);
-
-        res.status(200).json({ message: 'Friend request sent successfully.' });
+    cache.del(`friendRequests_${receiver.id}`);  // Invalidate pending requests for receiver
+    cache.del(`friends_${sender.id}`);            // Invalidate friends list for sender
+    cache.del(`friends_${receiver.id}`);          // Invalidate friends list for receiver
+  
+      res.json({ message: 'Friend request sent successfully.' });
     } catch (error) {
-        console.error('Error sending friend request:', error);
-        res.status(500).json({ error: 'An error occurred while sending the friend request.' });
+      console.error('Error sending friend request:', error);
+      res.status(500).json({ error: 'An error occurred while sending the friend request.' });
     }
-});
+  });
+  
 
 app.post('/api/rejectFriendRequest', async (req, res) => {
     const { requestId } = req.body;
@@ -651,7 +833,7 @@ app.post('/api/updateProfileDescription', async (req, res) => {
             return res.status(404).json({ error: "User not found or no changes made" });
         }
 
-        // ✅ Send response back to frontend
+        // Send response back to frontend
         console.log("🚀 Sending success response back to frontend...");
         return res.status(200).json({ 
             success: true, 
@@ -665,6 +847,112 @@ app.post('/api/updateProfileDescription', async (req, res) => {
     }
 });
 
+
+app.get('/api/friendStatus', async (req, res) => {
+    const { senderUsername, receiverUsername } = req.query;
+  
+    if (!senderUsername || !receiverUsername) {
+      return res.status(400).json({ error: 'Both senderUsername and receiverUsername are required.' });
+    }
+  
+    // If the user is viewing their own profile, return a default status.
+    if (senderUsername === receiverUsername) {
+      return res.json({ status: 'self' });
+    }
+  
+    try {
+      // 1. Fetch the two users' IDs
+      const [users] = await db.execute(
+        'SELECT id, username FROM users WHERE username IN (?, ?)',
+        [senderUsername, receiverUsername]
+      );
+  
+      if (users.length < 2) {
+        return res.status(404).json({ error: 'One or both users not found.' });
+      }
+  
+      const sender = users.find(u => u.username === senderUsername);
+      const receiver = users.find(u => u.username === receiverUsername);
+  
+      // 2. Check if they are already friends
+      const [friends] = await db.execute(
+        `SELECT * FROM friends
+         WHERE (user_id = ? AND friend_id = ?)
+            OR (user_id = ? AND friend_id = ?)`,
+        [sender.id, receiver.id, receiver.id, sender.id]
+      );
+      if (friends.length > 0) {
+        return res.json({ status: 'alreadyFriends' });
+      }
+  
+      // 3. Check if a friend request is pending (or any other status)
+      const [requests] = await db.execute(
+        `SELECT status
+           FROM friend_requests
+          WHERE sender_id = ? AND receiver_id = ?`,
+        [sender.id, receiver.id]
+      );
+  
+      if (requests.length > 0) {
+        return res.json({ status: requests[0].status }); // e.g., 'pending'
+      }
+  
+      // No relationship found
+      return res.json({ status: 'none' });
+    } catch (error) {
+      console.error('Error fetching friend status:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+  
+  
+  app.post('/api/cancelFriendRequest', async (req, res) => {
+    const { senderUsername, receiverUsername } = req.body;
+  
+    if (!senderUsername || !receiverUsername) {
+      return res.status(400).json({ error: 'Both senderUsername and receiverUsername are required.' });
+    }
+  
+    try {
+      // 1. Get the IDs for both users
+      const [users] = await db.execute(
+        'SELECT id, username FROM users WHERE username IN (?, ?)',
+        [senderUsername, receiverUsername]
+      );
+  
+      if (users.length < 2) {
+        return res.status(404).json({ error: 'One or both users not found.' });
+      }
+  
+      const sender = users.find(u => u.username === senderUsername);
+      const receiver = users.find(u => u.username === receiverUsername);
+  
+      // 2. Find the pending friend request from sender to receiver
+      const [requests] = await db.execute(
+        'SELECT id FROM friend_requests WHERE sender_id = ? AND receiver_id = ? AND status = "pending"',
+        [sender.id, receiver.id]
+      );
+  
+      if (requests.length === 0) {
+        return res.status(404).json({ error: 'No pending friend request found.' });
+      }
+  
+      // 3. Cancel the request (delete it from the table)
+      await db.execute(
+        'DELETE FROM friend_requests WHERE id = ?',
+        [requests[0].id]
+      );
+  
+      // Optionally, you might also want to clear any cached friend request data.
+      cache.del(`friendRequests_${receiver.id}`);
+  
+      res.status(200).json({ message: 'Friend request cancelled successfully.' });
+    } catch (error) {
+      console.error('Error cancelling friend request:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+  
 
 // Start Server
 app.listen(port, () => {

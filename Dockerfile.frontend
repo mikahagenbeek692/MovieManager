@@ -1,0 +1,20 @@
+# Use official Node.js image with version 18 or 20
+FROM node:20
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy package.json and yarn.lock (or package-lock.json if using npm)
+COPY package.json yarn.lock ./
+
+# Install dependencies
+RUN yarn install
+
+# Copy the rest of the application code
+COPY . .
+
+# Expose the port your app runs on
+EXPOSE 3000
+
+# Start the frontend application
+CMD ["yarn", "start"]

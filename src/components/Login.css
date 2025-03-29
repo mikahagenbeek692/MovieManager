@@ -1,116 +1,118 @@
-/* General styles for the login page */
 .login-page {
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
-    align-items: center;
-    height: 100vh;
-    background-color: rgb(78, 216, 158); /* Use the green color from homepage */
-    border: 2px solid black; /* Adds a 2px solid black border */
-    padding: 10px; /* Adds some spacing inside the border for better appearance */
-    border-radius: 5px; /* Optional: adds rounded corners */
-    font-family: Arial, sans-serif;
-  }
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  background-color: rgb(78, 216, 158);
+  border: 2px solid black;
+  padding: 10px;
+  border-radius: 5px;
+  font-family: Arial, sans-serif;
+}
 
-  .login-container {
-    align-items: center;
-    text-align: center;
-  }
+.login-container {
+  align-items: center;
+  text-align: center;
+}
 
-  .title {
-    width: 100%;
-    text-align: center;
-    border: 2px solid black; /* Adds a 2px solid black border */
-    border-radius: 5px; /* Optional: adds rounded corners */
-    background-color: rgb(161, 38, 192);
-    margin-bottom: 0px;
-  }
-  
-  .login-form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    max-width: 350px;
-    background-color: rgb(69, 163, 124); /* Slightly darker green background */
-    padding: 20px;
-    border: 2px solid black; /* Adds a 2px solid black border */
-    border-radius: 10px; /* Rounded corners */
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    
-  }
-  
-  /* Input fields styles */
-  input[type="text"],
-  input[type="password"] {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 20px;
-    border-radius: 5px;
-    border: 2px solid black; /* Adding a border for uniformity */
-    font-size: 16px;
-    background-color: white;
-    color: #333;
-    font-family: Arial, sans-serif;
-  }
-  
-  /* Button styles */
-  button {
-    width: 100%;
-    padding: 12px;
-    background-color: rgb(132, 127, 209); /* Purple color from homepage */
-    color: white;
-    font-size: 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-family: Arial, sans-serif;
-    transition: background-color 0.3s;
-  }
-  
-  button:hover {
-    background-color: rgb(106, 100, 168); /* Slightly darker purple when hovering */
-  }
-  
-  /* Error message style */
-  .error-message {
-    color: rgb(206, 14, 14);
-    font-style: italic;
-    font-weight: bold;
-    margin-top: 10px;
-    text-align: center;
-  }
-  
-  /* Header style */
-  h1 {
-    text-align: center;
-    font-size: 2.5em;
-    width: 15%;
-    color: white;
-    margin-bottom: 20px;
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    border: 2px solid black; /* Adds a 2px solid black border */
-    border-radius: 10px; /* Rounded corners */
-  }
-  
-  /* Form container: center aligned with some padding */
-  .form-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 10px;
-  }
-  
-  /* Focused input field style */
-  input[type="text"]:focus,
-  input[type="password"]:focus {
-    outline: none;
-    border-color: rgb(132, 127, 209); /* Purple border on focus */
-  }
-  
-  /* For the background, you could consider adding a gradient */
-  body {
-    background: linear-gradient(135deg, rgb(78, 216, 158), rgb(69, 163, 124)); /* Green to darker green gradient */
-  }
-  
+.title {
+  width: 360px;
+  text-align: center;
+  border: 2px solid black;
+  border-radius: 5px;
+  background-color: rgb(161, 38, 192);
+  margin: 0 auto;
+  padding: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 350px;
+  background-color: rgb(69, 163, 124);
+  padding: 20px;
+  border: 2px solid black;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  border: 2px solid black;
+  font-size: 16px;
+  background-color: white;
+  color: #333;
+  font-family: Arial, sans-serif;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background-color: rgb(132, 127, 209);
+  color: white;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: rgb(106, 100, 168);
+}
+
+.error-message {
+  width: 100%;
+  min-height: 20px;
+  color: rgb(206, 14, 14);
+  font-style: italic;
+  font-weight: bold;
+  margin-top: 10px;
+  text-align: center;
+  visibility: hidden;
+}
+
+.error-message:not(:empty) {
+  visibility: visible;
+}
+
+h1 {
+  text-align: center;
+  font-size: 2.5em;
+  width: 15%;
+  color: white;
+  margin-bottom: 20px;
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  border: 2px solid black;
+  border-radius: 10px;
+}
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+  outline: none;
+  border-color: rgb(132, 127, 209);
+}
+
+body {
+  background: linear-gradient(135deg, rgb(78, 216, 158), rgb(69, 163, 124));
+}
