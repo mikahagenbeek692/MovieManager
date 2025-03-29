@@ -212,7 +212,7 @@ docker exec -i mysql mysql -u root -p projectapi < databaseSetup.sql
 
 #### Option B: Manually Import via GUI
 
-You can also open `seed.sql` in a tool like **DBeaver**, **MySQL Workbench**, or any other MySQL-compatible database manager.
+You can also open `databaseSetup.sql` in a tool like **DBeaver**, **MySQL Workbench**, or any other MySQL-compatible database manager.
 
 ---
 
